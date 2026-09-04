@@ -41,3 +41,34 @@ _run.log
 run_state.json
 handout.md
 handout_active.md
+_handout.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# Node / build
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# Harness temp files (not in submission)
+.run_step_records.txt
+_chunk_g6.md
+run_sequential_md.conf
+
+# ------------------------------------------------
+# Authoring docs — local planning material, not part of the product
+# ------------------------------------------------
+design_documents/
+templates/
+private/
+demo/
+deck/
