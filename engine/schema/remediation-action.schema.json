@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/remediation-action.schema.json",
+  "title": "RemediationAction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_id", "finding_id", "kind", "target", "rationale"],
+  "properties": {
+    "action_id": { "type": "string", "minLength": 1 },
+    "finding_id": { "type": "string", "minLength": 1 },
+    "kind": { "type": "string", "enum": ["reprioritize", "annotate", "incident_note"] },
+    "target": { "type": "string", "minLength": 1 },
+    "new_priority": { "type": ["integer", "null"] },
+    "annotation_text": { "type": ["string", "null"] },
+    "dashboard_uid": { "type": ["string", "null"] },
+    "panel_id": { "type": ["integer", "null"] },
+    "time_ms": { "type": ["integer", "null"] },
+    "rationale": { "type": "string", "minLength": 1 },
+    "hours_saved": { "type": "number" },
+    "requires_approval": { "type": "boolean" }
+  }
+}

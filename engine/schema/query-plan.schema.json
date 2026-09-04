@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/query-plan.schema.json",
+  "title": "QueryPlan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plan_id", "question", "window_from", "window_to", "steps"],
+  "properties": {
+    "plan_id": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "window_from": { "type": "string", "format": "date-time" },
+    "window_to": { "type": "string", "format": "date-time" },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/queryPlanStep" }
+    }
+  },
+  "$defs": {
+    "queryPlanStep": {
+      "title": "QueryPlanStep",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_no", "kind", "tool_hint", "why"],
+      "properties": {
+        "step_no": { "type": "integer", "minimum": 1 },
+        "kind": { "type": "string", "enum": ["metrics", "logs", "traces", "dashboards", "alerts", "incidents"] },
+        "tool_hint": { "type": "string", "minLength": 1 },
+        "args": { "type": "object" },
+        "why": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

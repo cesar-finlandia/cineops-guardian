@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/delivery-commitment.schema.json",
+  "title": "DeliveryCommitment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commitment_id", "source_file", "production", "deliverable", "due_at", "owner"],
+  "properties": {
+    "commitment_id": { "type": "string", "minLength": 1 },
+    "source_file": { "type": "string", "minLength": 1 },
+    "production": { "type": "string", "minLength": 1 },
+    "deliverable": { "type": "string", "minLength": 1 },
+    "covers_shot_ids": { "type": "array", "items": { "type": "string" } },
+    "due_at": { "type": "string", "format": "date-time" },
+    "owner": { "type": "string", "minLength": 1 },
+    "notes": { "type": "string" },
+    "confidence": { "type": "number" },
+    "page_refs": { "type": "array", "items": { "type": "integer" } },
+    "synthetic": { "type": "boolean" }
+  }
+}

@@ -1,5 +1,18 @@
 {
-  "$comment": "TODO(ENGINE): define Engine input shape per hackathon domain \u2014 see docs/engine-guide.md",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/input.schema.json",
+  "title": "RunRequest",
   "type": "object",
-  "properties": {}
+  "additionalProperties": false,
+  "required": ["question", "production", "window_from", "window_to"],
+  "properties": {
+    "question": { "type": "string", "minLength": 1 },
+    "production": { "type": "string", "minLength": 1 },
+    "window_from": { "type": "string", "format": "date-time" },
+    "window_to": { "type": "string", "format": "date-time" },
+    "severity_floor": { "type": "string", "enum": ["low", "medium", "high"] },
+    "corpus": { "type": "string", "enum": ["demo", "upload"] },
+    "uploads": { "type": "array", "items": { "type": "string" } },
+    "trace_id": { "type": ["string", "null"] }
+  }
 }

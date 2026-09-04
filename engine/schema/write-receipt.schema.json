@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/write-receipt.schema.json",
+  "title": "WriteReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_id", "ok", "mcp_tool", "path"],
+  "properties": {
+    "action_id": { "type": "string", "minLength": 1 },
+    "ok": { "type": "boolean" },
+    "mcp_tool": { "type": "string", "minLength": 1 },
+    "path": { "type": "string", "enum": ["mcp", "rest-fallback"] },
+    "remote_id": { "type": ["string", "null"] },
+    "grafana_link": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"] }
+  }
+}

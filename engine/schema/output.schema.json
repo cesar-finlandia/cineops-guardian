@@ -1,5 +1,32 @@
 {
-  "$comment": "TODO(ENGINE): define Engine output shape (validated via RES-04 once defined) \u2014 see docs/engine-guide.md",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/output.schema.json",
+  "title": "RunResult",
   "type": "object",
-  "properties": {}
+  "additionalProperties": false,
+  "required": ["trace_id", "plan"],
+  "properties": {
+    "trace_id": { "type": "string", "minLength": 1 },
+    "plan": { "type": "object" },
+    "evidence": { "type": "array", "items": { "type": "object" } },
+    "findings": { "type": "array", "items": { "type": "object" } },
+    "actions": { "type": "array", "items": { "type": "object" } },
+    "receipts": { "type": "array", "items": { "type": "object" } },
+    "revised_shots": { "type": "array", "items": { "type": "object" } },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shots": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 },
+        "at_risk_hours": { "type": "number" },
+        "hours_saved": { "type": "number" },
+        "mcp_calls": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary_markdown": { "type": "string" },
+    "degraded": { "type": "boolean" },
+    "degraded_reasons": { "type": "array", "items": { "type": "string" } }
+  }
 }

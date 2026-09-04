@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cineops/schema/production-shot.schema.json",
+  "title": "ProductionShot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["shot_id", "production", "episode_or_reel", "scene", "status", "priority", "due_at"],
+  "properties": {
+    "shot_id": { "type": "string", "minLength": 1 },
+    "production": { "type": "string", "minLength": 1 },
+    "episode_or_reel": { "type": "string", "minLength": 1 },
+    "scene": { "type": "string", "minLength": 1 },
+    "vfx_vendor": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["queued", "rendering", "failed", "review", "approved", "delivered"] },
+    "priority": { "type": "integer" },
+    "due_at": { "type": "string", "format": "date-time" },
+    "render_job_id": { "type": ["string", "null"] },
+    "dependency_shot_ids": { "type": "array", "items": { "type": "string" } },
+    "synthetic": { "type": "boolean" }
+  }
+}
