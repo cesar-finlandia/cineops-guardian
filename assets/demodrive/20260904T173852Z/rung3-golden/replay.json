@@ -1,0 +1,2177 @@
+{
+ "counts": {
+  "commitments": 7,
+  "findings": 130,
+  "shots": 240
+ },
+ "findings": [
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-002",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-002 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-002"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-003",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-003 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-003"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-004",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-004 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-004"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-006",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-006 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-006"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-007",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-007 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-007"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-008",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-008 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-008"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-010",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-010 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-010"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-011",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-011 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-011"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-012",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-012 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-012"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-014",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-014 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-014"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-015",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-015 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-015"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-016",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-016 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-016"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-018",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-018 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-018"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-019",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-019 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-019"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-020",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-020 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-020"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-022",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-022 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-022"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-023",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-023 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-023"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-024",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-024 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-024"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-026",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-026 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-026"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-027",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-027 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-027"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-028",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-028 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-028"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-030",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-030 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-030"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-031",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-031 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-031"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-032",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-032 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-032"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-034",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-034 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-034"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-035",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-035 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-035"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-036",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-036 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-036"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-038",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-038 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-038"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-039",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-039 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-039"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-01",
+    "C-NH-01"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-040",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-040 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-040"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-042",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-042 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-042"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-043",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-043 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-043"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-044",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-044 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-044"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-046",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-046 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-046"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-047",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-047 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-047"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-048",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-048 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-048"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-050",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-050 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-050"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-051",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-051 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-051"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-052",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-052 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-052"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-054",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-054 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-054"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-055",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-055 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-055"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-056",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-056 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-056"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-058",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-058 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-058"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-059",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-059 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-059"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-060",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-060 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-060"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-061",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-061 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-061"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-062",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-062 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-062"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-063",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-063 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-063"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-064",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-064 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-064"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-065",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-065 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-065"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-066",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-066 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-066"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-067",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-067 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-067"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-068",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-068 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-068"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-069",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-069 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-069"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-070",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-070 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-070"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-071",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-071 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-071"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-072",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-072 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-072"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-073",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-073 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-073"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-074",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-074 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-074"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-075",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-075 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-075"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-076",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-076 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-076"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-077",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-077 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-077"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-078",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-078 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-078"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-079",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-079 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-079"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-02"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-080",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-080 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-080"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-081",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-081 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-081"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-082",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-082 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-082"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-083",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-083 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-083"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-084",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-084 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-084"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-085",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-085 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-085"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-086",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-086 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-086"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-087",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-087 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-087"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-088",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-088 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-088"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-089",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-089 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-089"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-090",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-090 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-090"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-091",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-091 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-091"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-092",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-092 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-092"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-093",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-093 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-093"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-094",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-094 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-094"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-095",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-095 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-095"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-096",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-096 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-096"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-097",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-097 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-097"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-098",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-098 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-098"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-099",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-099 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-099"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-100",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-100 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-100"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-101",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-101 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-101"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-102",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-102 healthy (status delivered, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-102"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-103",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-103 healthy (status delivered, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-103"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-104",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-104 healthy (status delivered, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-104"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-105",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-105 healthy (status delivered, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-105"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-106",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-106 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-106"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-107",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-107 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-107"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-108",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-108 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-108"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-109",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-109 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-109"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-110",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-110 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-110"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-111",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-111 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-111"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-112",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-112 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-112"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-113",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-113 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-113"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-114",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-114 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-114"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-115",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-115 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-115"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-116",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-116 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-116"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-117",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-117 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-117"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-118",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-118 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-118"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-119",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-119 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-119"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-03"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-120",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-120 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-120"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-121",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-121 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-121"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-122",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-122 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-122"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-123",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-123 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-123"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-124",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-124 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-124"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-125",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-125 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-125"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-126",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-126 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-126"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-127",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-127 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-127"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-128",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-128 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-128"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-129",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-129 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-129"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-130",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-130 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-130"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-131",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-131 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-131"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-132",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-132 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-132"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-133",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-133 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-133"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-134",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-134 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-134"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-135",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-135 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-135"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-136",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-136 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-136"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-137",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-137 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-137"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-138",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-138 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-138"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-139",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-139 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-139"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-140",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-140 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-140"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-141",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-141 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-141"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-142",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-142 healthy (status approved, vendor PRISMWORKS)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-142"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-143",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-143 healthy (status approved, vendor VANTASTUDIO)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-143"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-144",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-144 healthy (status approved, vendor LUMENFRAME)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-144"
+  },
+  {
+   "at_risk_hours": 0.0,
+   "commitment_ids": [
+    "C-NH-04"
+   ],
+   "evidence_ids": [],
+   "finding_id": "f-NH-145",
+   "level": "ok",
+   "reasons": [
+    "Shot NH-145 healthy (status approved, vendor HELIOSFORGE)"
+   ],
+   "rule_ids": [
+    "R-OK"
+   ],
+   "shot_id": "NH-145"
+  }
+ ],
+ "memo": [
+  {
+   "commitment_id": "C-NH-01",
+   "confidence": 0.5,
+   "covers_shot_ids": [
+    "NH-001",
+    "NH-002",
+    "NH-003",
+    "NH-004",
+    "NH-005",
+    "NH-006",
+    "NH-007",
+    "NH-008",
+    "NH-009",
+    "NH-010",
+    "NH-011",
+    "NH-012",
+    "NH-013",
+    "NH-014",
+    "NH-015",
+    "NH-016",
+    "NH-017",
+    "NH-018",
+    "NH-019",
+    "NH-020",
+    "NH-021",
+    "NH-022",
+    "NH-023",
+    "NH-024",
+    "NH-025",
+    "NH-026",
+    "NH-027",
+    "NH-028",
+    "NH-029",
+    "NH-030",
+    "NH-031",
+    "NH-032",
+    "NH-033",
+    "NH-034",
+    "NH-035",
+    "NH-036",
+    "NH-037",
+    "NH-038",
+    "NH-039",
+    "NH-040"
+   ],
+   "deliverable": "Alpha",
+   "due_at": "2026-09-06T17:00:00Z",
+   "notes": "Final VFX turnover for the opening city flyover; night plates graded and grain-matched.",
+   "owner": "M. Okafor",
+   "page_refs": [
+    1
+   ],
+   "production": "NEON HOLLOW",
+   "source_file": "01-vfx-delivery-memo.pdf",
+   "synthetic": true
+  }
+ ]
+}

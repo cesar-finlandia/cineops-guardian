@@ -1,0 +1,25 @@
+sections:
+  - name: pain
+    seconds: 15
+    narration: "Meet Maya, post-production coordinator on NEON HOLLOW. Tomorrow's dailies are blocked — the render queue is failing."
+  - name: live
+    seconds: 15
+    narration: "This is CineOps Guardian, live on Cloud Run — not slides, the real product."
+  - name: ask
+    seconds: 20
+    narration: "Maya asks in plain English which shots are blocked for dailies, and hits Diagnose."
+  - name: track-gate
+    seconds: 50
+    narration: "The agent queries the Grafana Cloud MCP server live — every evidence card names the MCP tool and row count."
+  - name: health
+    seconds: 20
+    narration: "Health proves it: Gemini reachable on Vertex, the live MCP tool list, BigQuery reachable — with a Cloud Run logs tail."
+  - name: write-back
+    seconds: 25
+    narration: "Maya approves — the annotation is written back to Grafana."
+  - name: outcome
+    seconds: 20
+    narration: "Blocked shots reprioritised with cited findings — hours of coordinator triage saved."
+  - name: close
+    seconds: 15
+    narration: "Deterministic rules decide; the model explains — built for the Grafana Labs track."
