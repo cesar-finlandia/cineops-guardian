@@ -1,0 +1,17 @@
+{
+  "event_name": "Agentic Cinema: The Blockbuster Hackathon",
+  "platform": "Devpost",
+  "deadline_utc": "2026-09-09T21:00:00Z",
+  "video": {
+    "max_seconds": 180,
+    "host": ["YouTube", "Vimeo"],
+    "language": "English",
+    "must_show_functioning": true
+  },
+  "track": "Grafana Labs",
+  "tracks_available": ["IBM", "Grafana Labs", "Parallel", "ClickHouse", "Replit"],
+  "judging_axes": ["Technological Implementation", "Design", "Potential Impact", "Quality of the Idea"],
+  "submission_fields": ["hosted_url", "text_description", "repo_url", "video_url", "partner_track", "devpost_form"],
+  "license": "Apache-2.0",
+  "disclosure_required": true
+}

@@ -58,6 +58,7 @@ dist/
 build/
 .next/
 out/
+/tmp/
 
 # Harness temp files (not in submission)
 .run_step_records.txt
