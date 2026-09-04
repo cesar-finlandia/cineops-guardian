@@ -246,7 +246,7 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
             plan_degraded = True
             degraded_reasons.append("plan-degraded")
         plan = QueryPlan(**{k: v for k, v in plan_dict.items() if not k.startswith("_")})
-        await _pub("plan-queries", "done", {"plan_id": plan.plan_id, "steps": len(plan.steps)}, degraded=plan_degraded)
+        await _pub("plan-queries", "done", {"plan_id": plan.plan_id, "steps": len(plan.steps), "plan": plan.model_dump()}, degraded=plan_degraded)
     except Exception as exc:
         fb = _fallback_plan(request.question, request.window_from, request.window_to)
         plan = QueryPlan(**fb)
@@ -261,7 +261,9 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
         for r in q.get("_degraded", []) or []:
             degraded_reasons.append(str(r))
         mcp_calls = len(evidence)
-        await _pub("query-grafana", "done", {"evidence_ids": [e.evidence_id for e in evidence], "mcp_calls": mcp_calls}, degraded=bool(q.get("_degraded")))
+        for ev in evidence:
+            await _pub("query-grafana", "streaming", {"mcp_tool": ev.mcp_tool, "kind": ev.kind, "rows": ev.row_count, "took_ms": ev.took_ms})
+        await _pub("query-grafana", "done", {"evidence": [e.model_dump() for e in evidence], "evidence_ids": [e.evidence_id for e in evidence], "mcp_calls": mcp_calls}, degraded=bool(q.get("_degraded")))
     except Exception as exc:
         evidence, mcp_calls = [], 0
         degraded_reasons.append(f"query-grafana: {exc}")
@@ -287,7 +289,7 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
         except Exception:
             trend_data = []
         findings = correlate(shots, commitments, evidence, trend_data)
-        await _pub("correlate-evidence", "done", {"finding_ids": [f.finding_id for f in findings]})
+        await _pub("correlate-evidence", "done", {"findings": [f.model_dump() for f in findings], "finding_ids": [f.finding_id for f in findings]})
     except Exception as exc:
         findings = []
         degraded_reasons.append(f"correlate: {exc}")
@@ -301,7 +303,7 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
         if is_degraded_result(actions):
             actions = []
             degraded_reasons.append(str(actions.get("reason", "remediation-degraded")) if isinstance(actions, dict) else "remediation-degraded")
-        await _pub("propose-remediation", "done", {"action_ids": [a.action_id for a in actions]})
+        await _pub("propose-remediation", "done", {"actions": [a.model_dump() for a in actions], "action_ids": [a.action_id for a in actions], "hours_saved": round(sum(float(a.hours_saved or 0.0) for a in actions[:1]), 1)})
     except Exception as exc:
         actions = []
         degraded_reasons.append(f"propose-remediation: {exc}")
@@ -311,12 +313,14 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
     receipts: list[WriteReceipt] = []
     try:
         if gate is None:
+            await _pub("write-back", "started", {"awaiting_approval": False, "actions": [a.model_dump() for a in actions]})
             for a in actions:
                 receipts.append(
                     WriteReceipt(action_id=a.action_id, ok=False, mcp_tool="stub-gate", path="mcp", remote_id=None, grafana_link=None, error="approval gate absent")  # type: ignore[arg-type]
                 )
             await _pub("write-back", "done", {"receipts": [r.model_dump() for r in receipts], "approved": []})
         else:
+            await _pub("write-back", "started", {"awaiting_approval": True, "actions": [a.model_dump() for a in actions]})
             approved_ids = await gate.wait(trace_id, actions)
             if not approved_ids:
                 degraded_reasons.append("approval-timeout")
