@@ -17,7 +17,10 @@ from typing import Any, Iterator
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.client.streamable_http import streamablehttp_client
+# NOTE: `streamable_http_client` is the name exported by both mcp 1.29.1 and
+# 2.1.1 (verified in the WU-DEPLOY-01 container); the alias without the first
+# underscore does not exist there.
+from mcp.client.streamable_http import streamable_http_client
 
 from engine.runtime.config import settings
 from engine.runtime.guard import guarded, unwrap
@@ -93,15 +96,33 @@ def _child_env() -> dict[str, str]:
     return env
 
 
-async def _connect_http() -> tuple[Any, Any, Any, Any]:
+try:  # mcp 2.x vendors its HTTP stack as httpx2; mcp 1.x uses httpx.
+    import httpx2 as _httpx_mod  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover
+    import httpx as _httpx_mod  # type: ignore[no-redef]
+
+
+async def _connect_http() -> tuple[Any, ...]:
     headers = {
         "X-Grafana-URL": settings.grafana_stack_url,
         "Authorization": "Bearer <oauth-2.1-access-token>",
     }
-    cm = streamablehttp_client(settings.grafana_mcp_url, headers=headers, timeout=_MCP_TIMEOUT_S)
+    # mcp>=2 removed the headers/timeout kwargs: auth rides on the httpx
+    # client passed as http_client (same shape in mcp 1.x).
+    http_client = _httpx_mod.AsyncClient(headers=headers, timeout=_httpx_mod.Timeout(_MCP_TIMEOUT_S))
+    try:
+        cm = streamable_http_client(settings.grafana_mcp_url, http_client=http_client)
+    except Exception:
+        with contextlib.suppress(Exception):
+            await http_client.aclose()
+        raise
     entered = await cm.__aenter__()
     try:
-        read, write, _get_id = entered
+        # mcp 1.x yields (read, write, getSessionId); mcp 2.x yields (read, write).
+        if len(entered) == 3:
+            read, write, _get_id = entered
+        else:
+            read, write = entered
         session = ClientSession(read, write)
         await session.__aenter__()
         try:
@@ -109,6 +130,12 @@ async def _connect_http() -> tuple[Any, Any, Any, Any]:
         except Exception:
             await session.__aexit__(None, None, None)
             raise
+        return (cm, session, read, write, http_client)
+    except Exception:
+        await cm.__aexit__(None, None, None)
+        with contextlib.suppress(Exception):
+            await http_client.aclose()
+        raise
         return (cm, session, read, write)
     except Exception:
         await cm.__aexit__(None, None, None)
@@ -154,6 +181,9 @@ async def _disconnect_async() -> None:
         await session.__aexit__(None, None, None)
     with contextlib.suppress(Exception):
         await cm.__aexit__(None, None, None)
+    if len(state) > 4 and state[4] is not None:
+        with contextlib.suppress(Exception):
+            await state[4].aclose()
 
 
 async def _ensure_async(transport: str) -> ClientSession:
