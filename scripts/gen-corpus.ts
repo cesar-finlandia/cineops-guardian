@@ -250,19 +250,25 @@ function buildCommitments(): Commitment[] {
 
 function renderMemos(commitments: Commitment[]): void {
   commitments.forEach((c, k) => {
-    const lines = [
-      WATERMARK_HEADER_TEXT,
-      "",
-      `NEON HOLLOW — VFX Delivery Memo ${k + 1}/6`,
-      `Deliverable: ${c.deliverable}`,
-      `Due: ${c.due_at}`,
-      `Owner: ${c.owner}`,
-      `Shots: ${c.covers_shot_ids.join(", ")}`,
-      "",
-      c.notes,
-    ];
-    writeMinimalPdf(join(MEMOS_DIR, c.source_file), lines);
+    writeMinimalPdf(join(MEMOS_DIR, c.source_file), memoLines(k, c));
   });
+  // Compatibility alias (DP-INGEST/DP-GEMINI verification filenames): the same
+  // watermarked memo-1 bytes under the legacy name. Deterministic (same input).
+  writeMinimalPdf(join(MEMOS_DIR, "01-vfx-delivery-memo.pdf"), memoLines(0, commitments[0] as Commitment));
+}
+
+function memoLines(k: number, c: Commitment): string[] {
+  return [
+    WATERMARK_HEADER_TEXT,
+    "",
+    `NEON HOLLOW — VFX Delivery Memo ${k + 1}/6`,
+    `Deliverable: ${c.deliverable}`,
+    `Due: ${c.due_at}`,
+    `Owner: ${c.owner}`,
+    `Shots: ${c.covers_shot_ids.join(", ")}`,
+    "",
+    c.notes,
+  ];
 }
 
 function dashboardJson(): string {
@@ -351,7 +357,12 @@ async function main(): Promise<void> {
   writeFileSync(join(TELEMETRY_DIR, "render_queue_metrics.csv"), metricsCsv(metrics), "utf8");
   writeFileSync(join(TELEMETRY_DIR, "failed_jobs.jsonl"), logs.map((l) => JSON.stringify(l)).join("\n") + "\n", "utf8");
   renderMemos(commitments);
-  writeFileSync(join(MEMOS_DIR, "commitments.json"), JSON.stringify(commitments, null, 2) + "\n", "utf8");
+  // Sidecar: six canonical entries + the deterministic alias entry for the
+  // legacy filename (same commitment, alias source_file; fallback filters by
+  // basename so degraded INGEST/GEMINI paths resolve under either name).
+  const aliasEntry: Commitment = { ...(commitments[0] as Commitment), source_file: "01-vfx-delivery-memo.pdf" };
+  const sidecar: Commitment[] = [...commitments, aliasEntry];
+  writeFileSync(join(MEMOS_DIR, "commitments.json"), JSON.stringify(sidecar, null, 2) + "\n", "utf8");
   writeFileSync(join(GRAFANA_DIR, "dashboard.json"), dashboardJson(), "utf8");
   writeFileSync(join(GRAFANA_DIR, "alert-rules.yaml"), alertRulesYaml(), "utf8");
   const manifest = {
