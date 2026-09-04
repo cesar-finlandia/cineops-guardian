@@ -1,0 +1,10 @@
+{
+  "service": "cineops-guardian",
+  "region": "REPLACE_WITH_REGION",
+  "project": "REPLACE_WITH_PROJECT_ID",
+  "min_instances": 1,
+  "memory": "2Gi",
+  "cpu": "2",
+  "timeout_seconds": 300,
+  "service_account": "cineops-guardian@REPLACE_WITH_PROJECT_ID.iam.gserviceaccount.com"
+}

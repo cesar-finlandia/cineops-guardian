@@ -1,0 +1,5 @@
+node_modules
+.git
+design_documents
+assets/demodrive
+.env
