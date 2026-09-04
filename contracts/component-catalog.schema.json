@@ -1,0 +1,58 @@
+{
+  "$comment": "Requirement IDs: ADV-REU-01, ASM-04, PGM-09, GOV-MIN-03, XCUT-08 | Single source: design_documents/design_plans/DP-G-assembly-advisory-tooling.md §6 | Schema for contracts/component-catalog.json (RES-04 validation target). Owned by M04.",
+  "$id": "https://chassis/contracts/component-catalog.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComponentCatalog",
+  "description": "Single source of truth for chassis component metadata, shared by ASM (dir copy + requires_* resolution), ADV (prompt catalog injection) and PGM Stage 4 (module emphasis advisory). Never duplicate the component list elsewhere.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$id", "version", "components"],
+  "properties": {
+    "$id": {
+      "const": "https://chassis/contracts/component-catalog.json",
+      "description": "Catalog self-identification per DP-G §6 canonical shape."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "const": "1.0.0",
+      "description": "Catalog SemVer — consumers pin MAJOR; new sub-component = MINOR (additive); rename = MAJOR."
+    },
+    "components": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "description": "Exactly twelve top-level chassis components in canonical order (DP-G §6 table).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "display_name", "description", "requires_env", "requires_providers", "gov_min_hint", "sub_components"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": ["resilience", "platform", "media", "ideation", "context", "dev-tooling", "assembly-advisory", "data", "cost", "provenance", "pgm", "profile"],
+            "description": "Top-level component id — mirrors assembly-manifest.schema.json enum's 12 parent ids."
+          },
+          "display_name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1, "description": "One-line description injected into the ADV prompt via {{catalog}} (ADV-REU-01); must stay domain-free (GOV-REU-02)." },
+          "requires_env": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+            "description": "Env var names required when this component is included. Single place these are declared; ASM-04 copies into manifest at assembly time (DOCTOR-REU-01 reads manifest, never catalog)."
+          },
+          "requires_providers": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Provider/service names required when included (e.g. openai). Used by PROV-01 disclosure and COST/TRACK."
+          },
+          "gov_min_hint": { "type": "string", "minLength": 1, "description": "GOV-MIN justification hint from DP-G §6 table — smallest-viable rationale for include/exclude." },
+          "sub_components": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Slash-form sub-component ids (6.17 granularity) enumerated for filter-copy; empty for leaf components."
+          }
+        }
+      }
+    }
+  }
+}
