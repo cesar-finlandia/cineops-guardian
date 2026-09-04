@@ -1,0 +1,13 @@
+flowchart LR
+    browser["Browser\n3-screen SSE UI"] --> run["Cloud Run\nengine/api/app.py\nGET /api/health"]
+    run --> agent["google-adk Agent\nengine/agents/agent.py\nrun_diagnosis: 8 fixed steps"]
+    agent --> t1["tool_load_context"]
+    agent --> t2["tool_plan_queries"]
+    agent --> t3["tool_query_grafana"]
+    agent --> t4["tool_correlate"]
+    agent --> t5["tool_summarize"]
+    t3 --> mcp["Grafana Cloud MCP server\nengine/mcp/grafana_mcp.py\nmcp_call / mcp_write_*"]
+    agent --> gem["Gemini 2.0 Flash on Vertex AI\nengine/providers/gemini.py\ngoogle-genai"]
+    agent --> bq["BigQuery\nengine/bq/loader.py\nsnapshots"]
+    mcp --> graf["Grafana stack\ndashboards / alerts /\nannotations"]
+    bq --> graf

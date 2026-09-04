@@ -67,9 +67,10 @@ run_sequential_md.conf
 
 # ------------------------------------------------
 # Authoring docs — local planning material, not part of the product
+# (NOTE DP-DEMO: deck/ is a submission deliverable owned by DP-DEMO, so it is
+# tracked; design_documents/ stays ignored as pure planning material.)
 # ------------------------------------------------
 design_documents/
 templates/
 private/
 demo/
-deck/
