@@ -1,7 +1,6 @@
-// Requirement IDs: UI-03, UI-AC-02 | DP-B §6.3, §10.8 item 1
-// Vite config for the minimal UI dev shell (`npm run dev`). Vitest keeps using
-// vitest.config.ts (which takes priority when both exist); aliases here mirror
-// it so components resolve identically in dev/build.
+// CineOps Guardian — Vite config (DP-UI WU-UI-07).
+// build.outDir="dist" for the DP-API static mount + DP-DEPLOY image copy;
+// dev proxy forwards API + SSE to the local uvicorn backend.
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
@@ -12,6 +11,15 @@ export default defineConfig({
     alias: {
       src: `${root}src`,
       examples: `${root}examples`,
+    },
+  },
+  build: {
+    outDir: "dist",
+  },
+  server: {
+    proxy: {
+      "/api": "http://localhost:8080",
+      "/events": "http://localhost:8080",
     },
   },
 });
