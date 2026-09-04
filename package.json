@@ -34,6 +34,8 @@
     "lint:deckgen-script": "node scripts/lint-deckgen-script.ts",
     "lint:demodrive-faqdef": "node scripts/lint-demodrive-faqdef.ts",
     "chassis": "vite-node scripts/chassis.ts",
+    "gen:corpus": "vite-node scripts/gen-corpus.ts",
+    "seed:grafana": "vite-node scripts/seed-grafana.ts",
     "lint:dev": "vite-node scripts/lint-dev-tooling.ts",
     "new:deck": "bash scripts/duplicate-pitch-deck.sh"
   },

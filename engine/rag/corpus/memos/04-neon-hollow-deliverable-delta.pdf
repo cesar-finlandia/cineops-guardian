@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 657 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(SYNTHETIC DEMO DATA — NOT REAL) Tj
+T*
+() Tj
+T*
+(NEON HOLLOW — VFX Delivery Memo 4/6) Tj
+T*
+(Deliverable: Delta) Tj
+T*
+(Due: 2026-09-09T17:00:00Z) Tj
+T*
+(Owner: R. Patel) Tj
+T*
+(Shots: NH-121, NH-122, NH-123, NH-124, NH-125, NH-126, NH-127, NH-128, NH-129, NH-130, NH-131, NH-132, NH-133, NH-134, NH-135, NH-136, NH-137, NH-138, NH-139, NH-140, NH-141, NH-142, NH-143, NH-144, NH-145, NH-146, NH-147, NH-148, NH-149, NH-150, NH-151, NH-152, NH-153, NH-154, NH-155, NH-156, NH-157, NH-158, NH-159, NH-160) Tj
+T*
+() Tj
+T*
+(Storm extension and sky replacements for the rooftop duel; sim caches versioned and archived.) Tj
+T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1019
+%%EOF

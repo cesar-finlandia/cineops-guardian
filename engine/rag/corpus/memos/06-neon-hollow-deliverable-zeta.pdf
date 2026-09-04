@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 651 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(SYNTHETIC DEMO DATA — NOT REAL) Tj
+T*
+() Tj
+T*
+(NEON HOLLOW — VFX Delivery Memo 6/6) Tj
+T*
+(Deliverable: Zeta) Tj
+T*
+(Due: 2026-09-11T17:00:00Z) Tj
+T*
+(Owner: D. Marsh) Tj
+T*
+(Shots: NH-201, NH-202, NH-203, NH-204, NH-205, NH-206, NH-207, NH-208, NH-209, NH-210, NH-211, NH-212, NH-213, NH-214, NH-215, NH-216, NH-217, NH-218, NH-219, NH-220, NH-221, NH-222, NH-223, NH-224, NH-225, NH-226, NH-227, NH-228, NH-229, NH-230, NH-231, NH-232, NH-233, NH-234, NH-235, NH-236, NH-237, NH-238, NH-239, NH-240) Tj
+T*
+() Tj
+T*
+(Title-sequence particle pass and end-card compositing; color pipeline ACEScg throughout.) Tj
+T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1013
+%%EOF

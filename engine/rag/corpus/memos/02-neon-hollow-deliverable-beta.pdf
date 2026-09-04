@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 656 >>
+stream
+BT
+/F1 12 Tf
+50 800 Td
+14 TL
+(SYNTHETIC DEMO DATA — NOT REAL) Tj
+T*
+() Tj
+T*
+(NEON HOLLOW — VFX Delivery Memo 2/6) Tj
+T*
+(Deliverable: Beta) Tj
+T*
+(Due: 2026-09-07T17:00:00Z) Tj
+T*
+(Owner: J. Reyes) Tj
+T*
+(Shots: NH-041, NH-042, NH-043, NH-044, NH-045, NH-046, NH-047, NH-048, NH-049, NH-050, NH-051, NH-052, NH-053, NH-054, NH-055, NH-056, NH-057, NH-058, NH-059, NH-060, NH-061, NH-062, NH-063, NH-064, NH-065, NH-066, NH-067, NH-068, NH-069, NH-070, NH-071, NH-072, NH-073, NH-074, NH-075, NH-076, NH-077, NH-078, NH-079, NH-080) Tj
+T*
+() Tj
+T*
+(Creature cleanup and wire removal across the canyon chase; roto locked per supervisor review.) Tj
+T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1018
+%%EOF
