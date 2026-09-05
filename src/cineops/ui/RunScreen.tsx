@@ -50,7 +50,7 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
 
   return (
     <section className="cineops-run" data-screen="run">
-      <DegradedBanner visible={state.degraded} reason={state.degradedReason} />
+      <DegradedBanner visible={state.degraded} reason={state.degradedReason} details={state.degradedSteps} />
       {streamStatus === "connecting" ? <p data-testid="connecting">Connecting to run stream…</p> : null}
       {streamStatus === "connecting" && envelopes.length === 0 ? (
         <RunLoader step="Connecting to run stream" detail="Warming the projection booth — first envelope arrives within seconds" />

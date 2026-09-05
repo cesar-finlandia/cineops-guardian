@@ -2,15 +2,19 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import type { CineOpsRunRequest } from "../types.js";
+import { SeedStatus } from "./components/SeedStatus.js";
+import type { SeedResult } from "./components/SeedStatus.js";
 
 export interface IngestScreenProps {
   onStart: (req: CineOpsRunRequest, files?: File[]) => void;
   seeding: boolean;
   onSeed: () => void;
+  seedResult?: SeedResult | null;
+  seedError?: string | null;
 }
 
 export function IngestScreen(props: IngestScreenProps): JSX.Element {
-  const { onStart, seeding, onSeed } = props;
+  const { onStart, seeding, onSeed, seedResult = null, seedError = null } = props;
   const [production, setProduction] = useState("NEON HOLLOW");
   const [question, setQuestion] = useState("Which shots are blocked for tomorrow's dailies and why?");
   const [windowFrom, setWindowFrom] = useState("2026-09-04T14:00:00Z");
@@ -87,6 +91,7 @@ export function IngestScreen(props: IngestScreenProps): JSX.Element {
           Diagnose
         </button>
       </div>
+      <SeedStatus seeding={seeding} result={seedResult} error={seedError} />
     </section>
   );
 }

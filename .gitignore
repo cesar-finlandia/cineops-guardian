@@ -107,12 +107,16 @@ out/
 
 # ============================================================================
 # Authoring docs — local planning material, not part of the product.
-# One deliberate exception: design_documents/e2e-testing/ is delivery evidence
+# Two deliberate exceptions: design_documents/e2e-testing/ is delivery evidence
 # (the testing strategy + the runnable Playwright suite a judge can
 # re-execute). Its heavy run output and operator secrets still stay out.
+# design_documents/tutorial/ is the end-to-end walkthrough for running the app.
 # ============================================================================
 design_documents/*
 !design_documents/e2e-testing/
+!design_documents/tutorial/
+# Superseded drafts the owner has parked (their `ignore_` prefix).
+design_documents/tutorial/ignore_*
 design_documents/e2e-testing/playwright-report/
 design_documents/e2e-testing/test-results/
 design_documents/e2e-testing/telemetry/.work/

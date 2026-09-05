@@ -81,7 +81,7 @@ export function ResultScreen(props: ResultScreenProps): JSX.Element {
 
   return (
     <section className="cineops-result" data-screen="result">
-      <DegradedBanner visible={state.degraded} reason={state.degradedReason} />
+      <DegradedBanner visible={state.degraded} reason={state.degradedReason} details={state.degradedSteps} />
       {notice ? (
         <p>
           {notice} <button onClick={() => void refresh()}>Retry</button>

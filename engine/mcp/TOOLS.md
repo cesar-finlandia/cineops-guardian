@@ -1,4 +1,4 @@
-# Grafana MCP tools (discovered 2026-09-05T09:37:13.304590Z)
+# Grafana MCP tools (discovered 2026-09-05T11:06:53.348751Z)
 - transport: stdio (pinned; settings.grafana_transport=stdio)
 - endpoint: 
 - stack: http://127.0.0.1:3000

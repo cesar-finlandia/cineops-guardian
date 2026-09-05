@@ -22,6 +22,7 @@ import { ResultScreen } from "./ResultScreen.js";
 import { HealthPill } from "./components/HealthPill.js";
 import { ThemeToggle } from "./ThemeToggle.js";
 import { BrandMark } from "./BrandMark.js";
+import type { DegradedStep } from "./components/DegradedBanner.js";
 
 void STEP_IDS;
 
@@ -38,6 +39,7 @@ export interface RunState {
   summary: string;
   degraded: boolean;
   degradedReason: string;
+  degradedSteps: DegradedStep[];
   awaitingApproval: boolean;
   traceId: string | null;
   error: string | null;
@@ -55,6 +57,7 @@ export const INITIAL_RUN_STATE: RunState = {
   summary: "",
   degraded: false,
   degradedReason: "",
+  degradedSteps: [],
   awaitingApproval: false,
   traceId: null,
   error: null,
@@ -187,7 +190,21 @@ export function reduceEnvelope(state: RunState, env: EventEnvelope): RunState {
     next = { ...next, status: "error", error: str(p["error"] ?? p["message"] ?? "run failed") };
   }
   if (isDegradedEnvelope(env)) {
-    next = { ...next, degraded: true, degradedReason: str((payload as Record<string, unknown>)["reason"] ?? "degraded fallback") };
+    // Explicit WHAT-degraded: backend degraded payloads carry `error`, not
+    // `reason`, so the old single-string fallback always printed the generic
+    // "degraded fallback". Record one row per affected step instead.
+    const p = payload as Record<string, unknown>;
+    const cause = str(p["reason"] ?? p["error"] ?? "fallback evidence used");
+    const seen = new Set(next.degradedSteps.map((d) => d.step));
+    const steps = seen.has(env.step_id)
+      ? next.degradedSteps
+      : [...next.degradedSteps, { step: env.step_id, cause }];
+    next = {
+      ...next,
+      degraded: true,
+      degradedReason: next.degradedReason || cause,
+      degradedSteps: steps,
+    };
   }
   return next;
 }
@@ -197,6 +214,7 @@ export function App(): JSX.Element {
   const [run, setRun] = useState<RunState>(INITIAL_RUN_STATE);
   const [seeding, setSeeding] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
+  const [seedResult, setSeedResult] = useState<{ shots: number; metrics: number } | null>(null);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
   const { envelopes, status: streamStatus, reconnect } = useEventStream({ traceId: run.traceId ?? undefined });
@@ -289,9 +307,11 @@ export function App(): JSX.Element {
   const onSeed = async (): Promise<void> => {
     setSeeding(true);
     setSeedError(null);
+    setSeedResult(null);
     try {
       // The Seed button promises a (re)load: force the refresh path.
-      await postSeed({ production: "NEON HOLLOW", refresh: true });
+      const res = await postSeed({ production: "NEON HOLLOW", refresh: true });
+      setSeedResult({ shots: res.shots, metrics: res.metrics });
     } catch (e) {
       // Seeding provisions BigQuery — meaningless offline. Report it, never
       // hide it, and never block Maya: the local corpus still runs degraded.
@@ -367,7 +387,7 @@ export function App(): JSX.Element {
       {screen === "ingest" ? (
         <>
           {seedError ? <p role="alert">Seed degraded ({seedError}) — continuing from local corpus.</p> : null}
-          <IngestScreen onStart={onStart} seeding={seeding} onSeed={onSeed} />
+          <IngestScreen onStart={onStart} seeding={seeding} onSeed={onSeed} seedResult={seedResult} seedError={seedError} />
         </>
       ) : null}
       {screen === "run" ? (
