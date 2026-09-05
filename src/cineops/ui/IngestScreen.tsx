@@ -20,6 +20,14 @@ export function IngestScreen(props: IngestScreenProps): JSX.Element {
 
   return (
     <section className="cineops-ingest" data-screen="ingest">
+      <div className="cg-hero">
+        <p className="cg-eyebrow">Neon Hollow · Dailies triage</p>
+        <h2>Which shots are blocked for tomorrow&apos;s dailies — and why?</h2>
+        <p className="cg-lede">
+          Ask in plain English. The agent queries live Grafana telemetry, joins it with your call sheets
+          and delivery memos, and proposes a revised shot order with citations.
+        </p>
+      </div>
       <h2>Incident triage</h2>
       <label>
         Production

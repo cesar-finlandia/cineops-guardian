@@ -11,6 +11,7 @@ import type { RunState } from "./App.js";
 import { EvidenceCard } from "./components/EvidenceCard.js";
 import { DegradedBanner } from "./components/DegradedBanner.js";
 import { ActionApproval } from "./components/ActionApproval.js";
+import { RunLoader } from "./widgets/RunLoader.js";
 
 export interface RunScreenProps {
   state: RunState;
@@ -51,6 +52,15 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
     <section className="cineops-run" data-screen="run">
       <DegradedBanner visible={state.degraded} reason={state.degradedReason} />
       {streamStatus === "connecting" ? <p data-testid="connecting">Connecting to run stream…</p> : null}
+      {streamStatus === "connecting" && envelopes.length === 0 ? (
+        <RunLoader step="Connecting to run stream" detail="Warming the projection booth — first envelope arrives within seconds" />
+      ) : null}
+      {state.status === "running" && envelopes.length === 0 && streamStatus !== "connecting" ? (
+        <RunLoader step="Loading production context" detail="Reading shot list and delivery memos" />
+      ) : null}
+      {state.awaitingApproval ? (
+        <RunLoader step="Waiting for your approval" detail="No writes happen until you approve" waiting />
+      ) : null}
       {streamStatus === "error" && !pollAlive ? (
         <p>
           Stream error — retrying…{onReconnect ? <button onClick={onReconnect}>Reconnect</button> : null}
@@ -79,6 +89,9 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
         ))}
       </div>
       <div className="cineops-evidence">
+        {state.evidence.length === 0 && envelopes.some((e) => e.step_id === "query-grafana" && e.status !== "done") ? (
+          <RunLoader step="Querying Grafana MCP" detail="Searching metrics, logs, traces, dashboards and alerts" />
+        ) : null}
         {state.evidence.map((e, i) => (
           <EvidenceCard
             key={(e.mcp_tool || "ev") + "-" + i}

@@ -87,6 +87,25 @@ export function ResultScreen(props: ResultScreenProps): JSX.Element {
           {notice} <button onClick={() => void refresh()}>Retry</button>
         </p>
       ) : null}
+      <div className="cg-hero">
+        <p className="cg-eyebrow">Dailies ready · {findings.length} findings</p>
+        <h2>Blocked shots, explained — with the fix</h2>
+        <p className="cg-lede">{state.summary ? state.summary.slice(0, 220) : "Revised shot order with citations and Grafana write-back below."}</p>
+      </div>
+      <div className="cg-totals">
+        <div className="cg-total">
+          <div className="cg-total-num">{findings.filter((f) => f.level === "blocked").length}</div>
+          <div className="cg-total-label">Blocked</div>
+        </div>
+        <div className="cg-total">
+          <div className="cg-total-num">{findings.filter((f) => f.level === "high").length}</div>
+          <div className="cg-total-label">High</div>
+        </div>
+        <div className="cg-total">
+          <div className="cg-total-num">{receipts.filter((r) => r.ok).length}</div>
+          <div className="cg-total-label">Writes applied</div>
+        </div>
+      </div>
       <h2>Findings</h2>
       {findings.map((f) => (
         <FindingRow key={f.finding_id} finding={f} />

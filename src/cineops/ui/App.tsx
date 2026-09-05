@@ -20,6 +20,8 @@ import { IngestScreen } from "./IngestScreen.js";
 import { RunScreen } from "./RunScreen.js";
 import { ResultScreen } from "./ResultScreen.js";
 import { HealthPill } from "./components/HealthPill.js";
+import { ThemeToggle } from "./ThemeToggle.js";
+import { BrandMark } from "./BrandMark.js";
 
 void STEP_IDS;
 
@@ -341,10 +343,27 @@ export function App(): JSX.Element {
 
   return (
     <div className="cineops-app" data-screen={screen}>
+      <a className="cg-skip-link" href="#cg-main">
+        Skip to content
+      </a>
+      <div className="cg-backdrop" aria-hidden="true">
+        <div className="cg-backdrop-vignette" />
+        <div className="cg-backdrop-grain" />
+      </div>
       <header className="cineops-header">
-        <h1>CineOps Guardian</h1>
-        <HealthPill ok={null} label="backend" />
+        <div className="cg-brand">
+          <BrandMark />
+          <div>
+            <h1>CineOps Guardian</h1>
+            <span className="cg-brand-sub">Dailies Console</span>
+          </div>
+        </div>
+        <div className="cg-header-right">
+          <HealthPill ok={null} label="backend" />
+          <ThemeToggle />
+        </div>
       </header>
+      <main id="cg-main">
       {screen === "ingest" ? (
         <>
           {seedError ? <p role="alert">Seed degraded ({seedError}) — continuing from local corpus.</p> : null}
@@ -365,6 +384,8 @@ export function App(): JSX.Element {
         />
       ) : null}
       {screen === "result" ? <ResultScreen state={run} traceId={run.traceId} onReset={onReset} /> : null}
+      </main>
+      <footer className="cg-footer">Synthetic demo data · writes require approval · Grafana links open the source panel</footer>
     </div>
   );
 }
