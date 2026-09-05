@@ -31,7 +31,7 @@ Guardian agent, UI, MCP wiring, corpus and demo — was newly created during
 
 ## AI tools used
 
-Google Cloud AI tools: Gemini 2.0 Flash on Vertex AI via `google-genai`
+Google Cloud AI tools: Gemini 2.5 Flash on Vertex AI via `google-genai`
 (`engine/providers/gemini.py`) and the `google-adk` agent framework
 (`engine/agents/agent.py`). Coding assistance was used for implementation.
 No non-Google AI model, agent framework, or AI API is imported or called

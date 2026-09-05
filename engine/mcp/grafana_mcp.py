@@ -81,6 +81,91 @@ def _dashboard_target() -> tuple[str, int]:
         return "cineops-render-queue", 1
 
 
+_CORPUS_CACHE: dict | None = None
+
+
+def _corpus() -> dict:
+    global _CORPUS_CACHE
+    if _CORPUS_CACHE is None:
+        try:
+            _CORPUS_CACHE = json.loads(Path("engine/rag/corpus/CORPUS.json").read_text(encoding="utf-8"))
+        except Exception:
+            _CORPUS_CACHE = {}
+    return _CORPUS_CACHE
+
+
+def _incident_window() -> tuple[str | None, str | None]:
+    try:
+        w = _corpus().get("incident_window", {}) or {}
+        start, end = w.get("from"), w.get("to")
+        if isinstance(start, str) and isinstance(end, str) and start and end:
+            return start, end
+    except Exception:
+        pass
+    return None, None
+
+
+_DS_UID_CACHE: dict[str, str] = {}
+
+
+def _datasource_uid(session: Any, ds_type: str) -> str | None:
+    """Default datasource UID for a type (E2E F14): prefer the flagged default,
+    else the first of that type. Cached per process."""
+    if ds_type in _DS_UID_CACHE:
+        return _DS_UID_CACHE[ds_type]
+    try:
+        result = session.call_tool("list_datasources", {})
+        rows, is_error = _parse_rows(result)
+        cands: list[dict] = []
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            for d in r.get("datasources", []) if isinstance(r.get("datasources"), list) else [r]:
+                if isinstance(d, dict) and str(d.get("type", "")).lower() == ds_type.lower() and d.get("uid"):
+                    cands.append(d)
+        if not cands:
+            return None
+        cands.sort(key=lambda d: (not bool(d.get("isDefault")), str(d.get("name", ""))))
+        uid = str(cands[0]["uid"])
+        _DS_UID_CACHE[ds_type] = uid
+        return uid
+    except Exception:
+        return None
+
+
+def _adapt_args(tool: str, kind: str, args: dict, session: Any) -> dict:
+    """Translate plan-level args to the discovered tool's schema (E2E F14).
+
+    QueryPlans carry a provider-neutral `query` key; the real tools want
+    `expr` (Prometheus) / `logql` (Loki). Missing datasource + time bounds
+    default to the corpus incident window so window-scoped demo evidence
+    works out of the box; explicit caller values always win.
+    """
+    args = dict(args or {})
+    start, end = _incident_window()
+    if kind == "metrics":
+        if "expr" not in args and "query" in args:
+            args["expr"] = args.pop("query")
+        if "datasourceUid" not in args:
+            uid = _datasource_uid(session, "prometheus")
+            if uid:
+                args["datasourceUid"] = uid
+        if "expr" in args and "startTime" not in args and "endTime" not in args and start and end:
+            args["startTime"], args["endTime"] = start, end
+            args.setdefault("stepSeconds", 60)
+            args.setdefault("queryType", "range")
+    elif kind == "logs":
+        if "logql" not in args and "query" in args:
+            args["logql"] = args.pop("query")
+        if "datasourceUid" not in args:
+            uid = _datasource_uid(session, "loki")
+            if uid:
+                args["datasourceUid"] = uid
+        if "logql" in args and "startRfc3339" not in args and "endRfc3339" not in args and start and end:
+            args["startRfc3339"], args["endRfc3339"] = start, end
+    return args
+
+
 def _child_env() -> dict[str, str]:
     # Minimal child env WITHOUT reading os.environ as a mapping (DP-GUARD owns
     # env reads; the §8 reviewer grep forbids the literal `os.environ` here).
@@ -144,7 +229,11 @@ async def _connect_http() -> tuple[Any, ...]:
 
 async def _connect_stdio() -> tuple[Any, Any, Any, Any]:
     params = StdioServerParameters(
-        command="mcp-grafana",
+        # settings.grafana_mcp_bin defaults to a bare "mcp-grafana" (PATH
+        # lookup) and is overridable with MCP_GRAFANA_BIN. Without it the
+        # server silently reports grafana-mcp unreachable whenever the launcher
+        # shell's PATH differs from the operator's (E2E F19).
+        command=settings.grafana_mcp_bin,
         args=["--disable-write=false"],
         env=_child_env(),
     )
@@ -420,7 +509,26 @@ def _append_proof(entry: dict) -> None:
         pass
 
 
-@guarded("grafana-mcp-call", provider="grafana")
+# Inner MCP timeouts reach 20-25 s, above the chassis 15 s default: without a
+# per-call budget every slow-but-working MCP call would false-timeout and
+# retry wastefully (E2E F11). Chassis defaults untouched.
+_MCP_GUARD_CONFIG: dict = {"timeout_ms": 60000, "retries": 1}
+
+
+def _revive_evidence(value: Any) -> Any:
+    """Rehydrate a golden-cache hit (plain dict) back into GrafanaEvidence.
+
+    No-op for live values and for DegradedResults (E2E F18).
+    """
+    if isinstance(value, dict) and "mcp_tool" in value and "reason" not in value:
+        try:
+            return GrafanaEvidence.model_validate(value)
+        except Exception:
+            return value
+    return value
+
+
+@guarded("grafana-mcp-call", provider="grafana", config=_MCP_GUARD_CONFIG, revive=_revive_evidence)
 def mcp_call(tool: str, args: dict, *, kind: str) -> Any:
     import hashlib as _hashlib
 
@@ -433,19 +541,20 @@ def mcp_call(tool: str, args: dict, *, kind: str) -> Any:
 
         return _mk(reason="mcp_tool_error", fallback_source="none", original_error=f"no tool resolved for kind {kind}")
     with mcp_session() as session:
-        result = session.call_tool(tool, dict(args or {}))
+        adapted = _adapt_args(tool, kind, dict(args or {}), session)
+        result = session.call_tool(tool, adapted)
     rows, is_error = _parse_rows(result)
     took_ms = int((time.monotonic() - t0) * 1000)
     if is_error:
         _append_proof(
-            {"ts": _utc_now_iso(), "tool": tool, "kind": kind, "args": dict(args or {}), "rows": 0, "ms": took_ms, "path": "mcp", "ok": False}
+            {"ts": _utc_now_iso(), "tool": tool, "kind": kind, "args": adapted, "rows": 0, "ms": took_ms, "path": "mcp", "ok": False}
         )
         from src.resilience.degraded import make_degraded_result as _mk2
 
         return _mk2(reason="mcp_tool_error", fallback_source="none", original_error=f"tool {tool} returned isError")
-    evidence_id = "ev-" + _hashlib.sha1((tool + json.dumps(args or {}, sort_keys=True, default=str)).encode("utf-8")).hexdigest()[:12]
+    evidence_id = "ev-" + _hashlib.sha1((tool + json.dumps(adapted, sort_keys=True, default=str)).encode("utf-8")).hexdigest()[:12]
     _append_proof(
-        {"ts": _utc_now_iso(), "tool": tool, "kind": kind, "args": dict(args or {}), "rows": len(rows), "ms": took_ms, "path": "mcp", "ok": True}
+        {"ts": _utc_now_iso(), "tool": tool, "kind": kind, "args": adapted, "rows": len(rows), "ms": took_ms, "path": "mcp", "ok": True}
     )
     return GrafanaEvidence(
         evidence_id=evidence_id,
@@ -461,7 +570,7 @@ def mcp_call(tool: str, args: dict, *, kind: str) -> Any:
     )
 
 
-@guarded("grafana-mcp-write-annotation", provider="grafana")
+@guarded("grafana-mcp-write-annotation", provider="grafana", config=_MCP_GUARD_CONFIG)
 def mcp_write_annotation(action: RemediationAction) -> Any:
     uid, panel = _dashboard_target()
     dashboard_uid = action.dashboard_uid or uid
@@ -520,7 +629,7 @@ def mcp_write_annotation(action: RemediationAction) -> Any:
         )
 
 
-@guarded("grafana-mcp-write-note", provider="grafana")
+@guarded("grafana-mcp-write-note", provider="grafana", config=_MCP_GUARD_CONFIG)
 def mcp_write_incident_note(action: RemediationAction) -> Any:
     uid, panel = _dashboard_target()
     dashboard_uid = action.dashboard_uid or uid

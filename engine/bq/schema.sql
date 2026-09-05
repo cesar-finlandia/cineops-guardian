@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `cineops.shots` (
   priority INT64 NOT NULL,
   due_at TIMESTAMP NOT NULL,
   render_job_id STRING,
-  dependency_shot_ids ARRAY<STRING> NOT NULL,
+  dependency_shot_ids ARRAY<STRING>,
   synthetic BOOL NOT NULL,
   loaded_at TIMESTAMP NOT NULL
 )
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `cineops.evidence_snapshots` (
   row_count INT64 NOT NULL,
   took_ms INT64 NOT NULL,
   degraded BOOL NOT NULL,
-  rows JSON,
+  rows_json JSON,
   captured_at TIMESTAMP NOT NULL
 )
 PARTITION BY DATE(captured_at)

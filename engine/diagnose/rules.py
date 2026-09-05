@@ -43,6 +43,83 @@ def _is_number(v: Any) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
+def _num(v: Any) -> float | None:
+    if _is_number(v):
+        return float(v)
+    if isinstance(v, str):
+        try:
+            return float(v.strip())
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def _expand_prom_series(entry: dict) -> list[dict]:
+    """One Prometheus series -> flat row(s): labels on top, samples kept."""
+    base = dict(entry.get("metric") or {})
+    if not isinstance(base, dict):
+        base = {}
+    if "values" in entry and isinstance(entry["values"], list):
+        return [{**base, "values": list(entry["values"])}]
+    if "value" in entry:
+        return [{**base, "value": entry["value"]}]
+    return [{**base}] if base else []
+
+
+def _expand_loki_entry(entry: dict) -> list[dict]:
+    """One Loki stream entry -> flat row: labels on top, JSON lines parsed."""
+    base = dict(entry.get("labels") or {})
+    if not isinstance(base, dict):
+        base = {}
+    line = entry.get("line")
+    if isinstance(line, str):
+        s = line.strip()
+        if s.startswith("{"):
+            try:
+                parsed = json.loads(s)
+            except (json.JSONDecodeError, ValueError):
+                parsed = None
+            if isinstance(parsed, dict):
+                return [{**base, **parsed, "line": line}]
+        return [{**base, "line": line}]
+    if isinstance(line, dict):
+        return [{**base, **line}]
+    return [{**base}] if base else []
+
+
+def _flatten_evidence_rows(rows: list) -> list[dict]:
+    """Unwrap MCP envelope payloads into flat per-series/per-entry dicts.
+
+    query_prometheus returns {"data": [{metric, values}, ...]} (range) or
+    {"data": {"result": [...]}}; query_loki_logs returns
+    {"data": [{timestamp, line, labels}, ...]} with JSON lines. Rules below
+    only understand flat rows, so expand here — once, centrally.
+    """
+    out: list[dict] = []
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        data = r.get("data")
+        items: list | None = None
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict) and isinstance(data.get("result"), list):
+            items = data["result"]
+        if items is None:
+            out.append(r)
+            continue
+        for e in items:
+            if not isinstance(e, dict):
+                continue
+            if "metric" in e or "values" in e or "value" in e:
+                out.extend(_expand_prom_series(e))
+            elif "line" in e or "labels" in e:
+                out.extend(_expand_loki_entry(e))
+            else:
+                out.append(e)
+    return out
+
+
 def row_matches_shot(row: dict, shot: ProductionShot) -> bool:
     try:
         if str(row.get("shot_id")) == shot.shot_id:
@@ -83,7 +160,7 @@ def build_rule_context(shot, commitments_for_shot, evidence, trend, incident_win
         if is_degraded_result(e):
             continue
         kind = getattr(e, "kind", None)
-        rows = list(getattr(e, "rows", None) or [])
+        rows = _flatten_evidence_rows(list(getattr(e, "rows", None) or []))
         contributed = False
         if kind == "metrics":
             for r in rows:
@@ -143,9 +220,21 @@ def _fail_count(ctx: RuleContext) -> int:
 def _queue_stats(ctx: RuleContext) -> tuple[int, float]:
     vals: list[float] = []
     for r in ctx.metrics_rows:
-        if not isinstance(r, dict) or "value" not in r:
+        if not isinstance(r, dict):
+            continue
+        if "values" in r and isinstance(r["values"], list):
+            for p in r["values"]:
+                if isinstance(p, (list, tuple)) and len(p) == 2:
+                    n = _num(p[1])
+                    if n is not None:
+                        vals.append(n)
             continue
         v = r.get("value")
+        if isinstance(v, (list, tuple)) and len(v) == 2:
+            n = _num(v[1])
+            if n is not None:
+                vals.append(n)
+            continue
         if _is_number(v):
             vals.append(float(v))
     consec = 0

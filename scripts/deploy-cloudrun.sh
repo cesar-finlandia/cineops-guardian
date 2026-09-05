@@ -5,6 +5,10 @@
 # Only PROJECT_ID and REGION are operator-supplied; everything else comes from
 # config/deploy/cloudrun.json. Never pass a secret value on the command line.
 set -euo pipefail
+# Gemini runs on Vertex AI with the service account's ADC - never an API key.
+# GOOGLE_GENAI_USE_VERTEXAI must be set explicitly: google-adk falls back to
+# AI-Studio/API-key mode when it is unset, and Cloud Run does not export
+# GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION for the SDK either.
 CONFIG="config/deploy/cloudrun.json"
 SERVICE=$(python3 -c "import json;print(json.load(open('$CONFIG'))['service'])")
 REGION="${REGION:-$(python3 -c "import json;print(json.load(open('$CONFIG'))['region'])")}"
@@ -31,7 +35,7 @@ gcloud run deploy "$SERVICE" \
   --memory "$MEMORY" \
   --timeout "$TIMEOUT" \
   --service-account "$SERVICE_ACCOUNT" \
-  --set-env-vars "GRAFANA_STACK_URL=${GRAFANA_STACK_URL},GRAFANA_MCP_URL=${GRAFANA_MCP_URL},GRAFANA_TRANSPORT=${GRAFANA_TRANSPORT:-sse}" \
+  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-$REGION},GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash},BQ_DATASET=${BQ_DATASET:-cineops},GRAFANA_STACK_URL=${GRAFANA_STACK_URL},GRAFANA_MCP_URL=${GRAFANA_MCP_URL},GRAFANA_TRANSPORT=${GRAFANA_TRANSPORT:-auto}" \
   --set-secrets "GRAFANA_SERVICE_ACCOUNT_TOKEN=grafana-service-account-token:latest"
 URL=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
 echo "PUBLIC_URL=$URL"

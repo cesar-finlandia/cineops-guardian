@@ -42,7 +42,28 @@ def _dashboard_target() -> tuple[str, int]:
         return "cineops-render-queue", 1
 
 
-@guarded("diag-propose-remediation", provider="google")
+def _revive_actions(value):
+    """Rehydrate a golden-cache hit (list of dicts) into RemediationAction.
+
+    No-op for live values and for DegradedResults (E2E F18).
+    """
+    if isinstance(value, list):
+        out = []
+        for item in value:
+            if isinstance(item, dict):
+                try:
+                    out.append(RemediationAction.model_validate(item))
+                    continue
+                except Exception:
+                    return value
+            out.append(item)
+        return out
+    return value
+
+
+@guarded("diag-propose-remediation", provider="google",
+         config={"timeout_ms": 120000, "retries": 1},  # nests one generate_text (60 s); E2E F11
+         revive=_revive_actions)
 def propose_remediation(findings, shots, evidence, *, severity_floor: str = "low") -> list[RemediationAction]:
     floor = severity_floor if severity_floor in ("low", "medium", "high") else "low"
     kept = [f for f in findings if getattr(f, "level", None) in LEVEL_RANK and LEVEL_RANK[f.level] >= LEVEL_RANK[floor]]

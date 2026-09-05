@@ -15,7 +15,7 @@ import type {
   CineOpsWriteReceipt,
 } from "../types.js";
 import { STEP_IDS } from "../types.js";
-import { postRun, postSeed, postUpload, postApprove } from "../api.js";
+import { postRun, postSeed, postUpload, postApprove, getRecentEnvelopes } from "../api.js";
 import { IngestScreen } from "./IngestScreen.js";
 import { RunScreen } from "./RunScreen.js";
 import { ResultScreen } from "./ResultScreen.js";
@@ -194,26 +194,91 @@ export function App(): JSX.Element {
   const [screen, setScreen] = useState<ScreenState>("ingest");
   const [run, setRun] = useState<RunState>(INITIAL_RUN_STATE);
   const [seeding, setSeeding] = useState(false);
+  const [seedError, setSeedError] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
   const { envelopes, status: streamStatus, reconnect } = useEventStream({ traceId: run.traceId ?? undefined });
-  const appliedRef = useRef(0);
+  // E2E F13: the chassis SSE hub is broadcast-only and closes idle streams
+  // after ~15 s; our runs have multi-minute gaps. `merged` is the union of
+  // live hook envelopes + replayed ones from GET /api/events/recent,
+  // deduped by sequence and kept sorted. The reducer consumes ONLY merged,
+  // so reconnects (which wipe the hook buffer) can never lose or duplicate
+  // an envelope. `maxSeqRef` is the highest sequence applied so far.
+  const [merged, setMerged] = useState<EventEnvelope[]>([]);
+  const appliedSeqRef = useRef<Set<number>>(new Set());
+  const maxSeqRef = useRef(-1);
   const traceRef = useRef<string | null>(null);
+  const [pollAliveAt, setPollAliveAt] = useState(0);
+
+  const ingest = (incoming: EventEnvelope[]): void => {
+    const fresh = incoming.filter((e) => typeof e.sequence === "number" && !appliedSeqRef.current.has(e.sequence));
+    if (fresh.length === 0) return;
+    for (const e of fresh) {
+      appliedSeqRef.current.add(e.sequence as number);
+      if ((e.sequence as number) > maxSeqRef.current) maxSeqRef.current = e.sequence as number;
+    }
+    setMerged((prev) => {
+      const seen = new Set(prev.map((e) => e.sequence));
+      const next = [...prev, ...fresh.filter((e) => !seen.has(e.sequence))];
+      next.sort((a, b) => (a.sequence as number) - (b.sequence as number));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (traceRef.current !== run.traceId) {
       traceRef.current = run.traceId;
-      appliedRef.current = 0;
+      appliedSeqRef.current = new Set();
+      maxSeqRef.current = -1;
+      setMerged([]);
+      setPollAliveAt(0);
     }
-    if (envelopes.length > appliedRef.current) {
-      setRun((prev) => {
-        let next = prev;
-        for (let i = appliedRef.current; i < envelopes.length; i++) next = reduceEnvelope(next, envelopes[i] as EventEnvelope);
-        appliedRef.current = envelopes.length;
-        return next;
-      });
-    }
-  }, [envelopes, run.traceId]);
+  }, [run.traceId]);
+
+  useEffect(() => {
+    ingest(envelopes as EventEnvelope[]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envelopes]);
+
+  // Gap-filling poller: while a run is active, replay anything SSE missed.
+  useEffect(() => {
+    if (!run.traceId || run.status === "done" || run.status === "error" || run.status === "idle") return;
+    let cancelled = false;
+    const tick = async (): Promise<void> => {
+      try {
+        const res = await getRecentEnvelopes(run.traceId as string, maxSeqRef.current);
+        if (cancelled) return;
+        const envs = (res.envelopes ?? []) as EventEnvelope[];
+        if (envs.length > 0) {
+          ingest(envs);
+          setPollAliveAt(Date.now());
+        }
+      } catch {
+        // Poll failures are silent: SSE remains the primary channel.
+      }
+    };
+    void tick();
+    const timer = setInterval(() => void tick(), 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run.traceId, run.status]);
+
+  useEffect(() => {
+    // Recompute from scratch on every merge: envelopes are append-only and
+    // the reducer is deterministic, so a full recompute is identical to
+    // incremental application — and immune to reconnect-induced skew.
+    if (merged.length === 0) return;
+    setRun((prev) => {
+      if (!prev.traceId) return prev;
+      let next: RunState = { ...INITIAL_RUN_STATE, traceId: prev.traceId, status: "running" };
+      for (const env of merged) next = reduceEnvelope(next, env);
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merged]);
 
   useEffect(() => {
     if (run.status === "done") setScreen("result");
@@ -221,8 +286,14 @@ export function App(): JSX.Element {
 
   const onSeed = async (): Promise<void> => {
     setSeeding(true);
+    setSeedError(null);
     try {
-      await postSeed({ production: "NEON HOLLOW" });
+      // The Seed button promises a (re)load: force the refresh path.
+      await postSeed({ production: "NEON HOLLOW", refresh: true });
+    } catch (e) {
+      // Seeding provisions BigQuery — meaningless offline. Report it, never
+      // hide it, and never block Maya: the local corpus still runs degraded.
+      setSeedError(e instanceof Error ? e.message : String(e));
     } finally {
       setSeeding(false);
     }
@@ -230,10 +301,17 @@ export function App(): JSX.Element {
 
   const onStart = async (req: CineOpsRunRequest, files?: File[]): Promise<void> => {
     try {
-      if (req.corpus === "demo") await postSeed({ production: req.production });
+      if (req.corpus === "demo") {
+        try {
+          await postSeed({ production: req.production });
+        } catch (e) {
+          console.warn("[ui] seed degraded, continuing from local corpus: " + String(e));
+          setSeedError(e instanceof Error ? e.message : String(e));
+        }
+      }
       const { trace_id } = await postRun(req);
       if (files && files.length > 0) await postUpload(trace_id, files);
-      appliedRef.current = 0;
+      // Fresh trace: the traceRef effect resets merged/applied state.
       setApproved(false);
       setApproving(false);
       setRun({ ...INITIAL_RUN_STATE, traceId: trace_id, status: "running" });
@@ -267,7 +345,12 @@ export function App(): JSX.Element {
         <h1>CineOps Guardian</h1>
         <HealthPill ok={null} label="backend" />
       </header>
-      {screen === "ingest" ? <IngestScreen onStart={onStart} seeding={seeding} onSeed={onSeed} /> : null}
+      {screen === "ingest" ? (
+        <>
+          {seedError ? <p role="alert">Seed degraded ({seedError}) — continuing from local corpus.</p> : null}
+          <IngestScreen onStart={onStart} seeding={seeding} onSeed={onSeed} />
+        </>
+      ) : null}
       {screen === "run" ? (
         <RunScreen
           state={run}
@@ -275,9 +358,10 @@ export function App(): JSX.Element {
           onApprove={onApprove}
           approving={approving}
           approved={approved}
-          envelopes={envelopes}
+          envelopes={merged}
           onReconnect={reconnect}
           onReset={onReset}
+          pollAlive={Date.now() - pollAliveAt < 10000}
         />
       ) : null}
       {screen === "result" ? <ResultScreen state={run} traceId={run.traceId} onReset={onReset} /> : null}

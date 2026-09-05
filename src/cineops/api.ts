@@ -42,7 +42,11 @@ export async function getResult(
   return (await res.json()) as CineOpsRunResult | { status: "running" };
 }
 
-export async function postSeed(body: { production: string }): Promise<{ shots: number; metrics: number }> {
+export async function postSeed(body: { production: string; refresh?: boolean }): Promise<{
+  shots: number;
+  metrics: number;
+  refreshed?: boolean;
+}> {
   const res = await fetch(BASE + "/api/seed", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,6 +63,20 @@ export async function postUpload(trace_id: string, files: File[]): Promise<{ pat
   const res = await fetch(BASE + "/api/upload", { method: "POST", body: form });
   await check(res);
   return (await res.json()) as { paths: string[] };
+}
+
+export async function getRecentEnvelopes(
+  trace_id: string,
+  after: number,
+): Promise<{ trace_id: string; envelopes: unknown[] }> {
+  // Gap insurance (E2E F13): replays envelopes the SSE hub broadcast while
+  // this client was disconnected (chassis closes idle streams after ~15 s;
+  // our runs have multi-minute gaps).
+  const res = await fetch(
+    BASE + "/api/events/recent?trace_id=" + encodeURIComponent(trace_id) + "&after=" + String(after),
+  );
+  await check(res);
+  return (await res.json()) as { trace_id: string; envelopes: unknown[] };
 }
 
 export async function getHealth(): Promise<{

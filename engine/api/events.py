@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import itertools
 import json
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
@@ -30,6 +31,36 @@ class PublishFn(Protocol):
     async def __call__(self, step_id: str, status: str, payload: dict, *, degraded: bool = False) -> None: ...
 
 
+# Replay buffer (DP-API, E2E F13): the chassis SSE hub is broadcast-only with
+# no history, and its generator closes the connection after ~15 s without an
+# envelope. Our runs have multi-minute gaps (memo extraction, MCP timeouts,
+# BQ loads, the 120 s approval wait), so a browser that subscribes late or
+# reconnects would lose envelopes forever. Every published envelope is also
+# appended here (bounded deque per trace); GET /api/events/recent replays
+# anything the live stream missed. GIL-atomic appends; readers get snapshots.
+RECENT_MAX_TRACES: int = 50
+RECENT_MAX_PER_TRACE: int = 1000
+RECENT: dict[str, deque] = {}
+
+
+def _remember(trace_id: str, envelope: dict) -> None:
+    buf = RECENT.get(trace_id)
+    if buf is None:
+        if len(RECENT) >= RECENT_MAX_TRACES:
+            oldest = next(iter(RECENT))
+            del RECENT[oldest]
+        buf = RECENT[trace_id] = deque(maxlen=RECENT_MAX_PER_TRACE)
+    buf.append(envelope)
+
+
+def recent_envelopes(trace_id: str, after: int = -1) -> list[dict]:
+    """Envelopes published for trace_id with sequence > after, in order."""
+    buf = RECENT.get(trace_id)
+    if not buf:
+        return []
+    return [e for e in list(buf) if isinstance(e.get("sequence"), int) and e["sequence"] > after]
+
+
 def make_publisher(trace_id: str) -> PublishFn:
     counter = itertools.count(0)
 
@@ -50,6 +81,7 @@ def make_publisher(trace_id: str) -> PublishFn:
         result = validate(_schema(), envelope)
         if not result["valid"]:
             raise ValueError(f"envelope failed chassis validation: {result['errors']}")
+        _remember(trace_id, envelope)
         await HUB.publish(envelope)
 
     return publish

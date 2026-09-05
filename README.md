@@ -4,7 +4,7 @@ Post-production incident triage — plain-English questions answered with live G
 
 **Partner track: Grafana Labs**
 
-Powered by Gemini 2.0 Flash on Vertex AI + google-adk.
+Powered by Gemini 2.5 Flash on Vertex AI (ADC — no API keys) + google-adk.
 
 - Spin-up: [docs/SPINUP.md](docs/SPINUP.md)
 - License: [LICENSE](LICENSE)
@@ -42,7 +42,7 @@ first match wins:
 | R-TREND worsening 7-day trend | medium |
 | R-OK healthy shot | ok |
 
-Gemini 2.0 Flash on Vertex explains and cites — rules never defer judgment
+Gemini 2.5 Flash on Vertex explains and cites — rules never defer judgment
 to the model. Five ADK tools: `tool_load_context`, `tool_plan_queries`,
 `tool_query_grafana`, `tool_correlate`, `tool_summarize`.
 
@@ -53,7 +53,7 @@ to the model. Five ADK tools: `tool_load_context`, `tool_plan_queries`,
 ```python
 from google.adk.agents import Agent  # engine/agents/agent.py:13
 _AGENT = Agent(  # engine/agents/agent.py:201
-    model=build_adk_model(),  # engine/agents/agent.py:202 -> "gemini-2.0-flash"
+    model=build_adk_model(),  # engine/agents/agent.py:202 -> "gemini-2.5-flash"
 ```
 
 (b) `google-genai` in `engine/providers/gemini.py`:
@@ -70,7 +70,7 @@ def mcp_call(tool: str, args: dict, *, kind: str) -> Any:  # engine/mcp/grafana_
 def mcp_write_annotation(action: RemediationAction) -> Any:  # engine/mcp/grafana_mcp.py:465
 ```
 
-Live evidence values: model id `gemini-2.0-flash`; `mcp_health()` tool discovery
+Live evidence values: model id `gemini-2.5-flash`; `mcp_health()` tool discovery
 pending live stack credentials (see `engine/mcp/TOOLS.md`); every MCP call is
 appended to `logs/mcp-grafana.jsonl`. No non-Google AI SDK is imported or
 called anywhere (gate: `bash scripts/hygiene.sh`).
@@ -85,6 +85,25 @@ line `SYNTHETIC DEMO DATA — NOT REAL`). Grafana telemetry is seeded by
 ## Run it
 
 See [docs/SPINUP.md](docs/SPINUP.md).
+
+## Verified end to end
+
+Every use case is proven in a real Chromium browser against the real backend
+serving the real `dist/` build — the same artifact the container ships. The
+strategy, the use-case matrix (UC-01..UC-12) and the defect log are in
+[design_documents/e2e-testing/STRATEGY.md](design_documents/e2e-testing/STRATEGY.md);
+the runnable suite sits beside it:
+
+```bash
+npm run build:ui
+npx playwright test --config design_documents/e2e-testing/playwright.config.ts
+```
+
+Three tiers: T0 proves the offline golden fallback boots and completes with no
+credentials and no network; T1 (the gate) drives the full Maya flow — seed,
+diagnose, 8 streamed steps, approval gate, results, CSV export — against live
+Vertex, live BigQuery and a real Grafana MCP server; T2 is the container and
+deploy checklist in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## License
 

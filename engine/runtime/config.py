@@ -29,13 +29,17 @@ def _bool01(name: str) -> bool:
 class Settings:
     gcp_project: str = ""
     gcp_location: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_temperature: float = 0.0
     bq_dataset: str = "cineops"
     grafana_mcp_url: str = ""
     grafana_stack_url: str = ""
     grafana_service_account_token: str = ""
     grafana_transport: str = "auto"
+    # stdio launcher for the Grafana MCP server. Default resolves on PATH;
+    # MCP_GRAFANA_BIN points at an explicit binary so the E2E suite and the
+    # container do not depend on the operator's shell PATH (E2E F19).
+    grafana_mcp_bin: str = "mcp-grafana"
     forced_degraded: bool = False
     cost_budget_usd: float = 100.0
     mcp_proof_log: str = "logs/mcp-grafana.jsonl"
@@ -48,13 +52,14 @@ def _load_settings() -> Settings:
     return Settings(
         gcp_project=_str("GOOGLE_CLOUD_PROJECT", ""),
         gcp_location=_str("GOOGLE_CLOUD_LOCATION", ""),
-        gemini_model=_str("GEMINI_MODEL", "gemini-2.0-flash"),
+        gemini_model=_str("GEMINI_MODEL", "gemini-2.5-flash"),
         gemini_temperature=_temp("GEMINI_TEMPERATURE", 0.0),
         bq_dataset=_str("BQ_DATASET", "cineops"),
         grafana_mcp_url=_str("GRAFANA_MCP_URL", ""),
         grafana_stack_url=_str("GRAFANA_STACK_URL", ""),
         grafana_service_account_token=_str("GRAFANA_SERVICE_ACCOUNT_TOKEN", ""),
         grafana_transport=t if t in ("http", "stdio", "auto") else "auto",
+        grafana_mcp_bin=_str("MCP_GRAFANA_BIN", "mcp-grafana") or "mcp-grafana",
         forced_degraded=_bool01("RES_FORCED_DEGRADED"),
         cost_budget_usd=_posfloat("COST_BUDGET_USD", 100.0),
         mcp_proof_log="logs/mcp-grafana.jsonl",

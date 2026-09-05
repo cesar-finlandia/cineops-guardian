@@ -28,6 +28,7 @@ _MIME_BY_SUFFIX: dict[str, str] = {
 }
 MAX_INLINE_FILE_BYTES: int = 20 * 1024 * 1024
 _HEALTH_TTL_S: float = 30.0
+_HEALTH_TTL_FAIL_S: float = 5.0  # negative results expire fast: the pill must self-heal (E2E F16)
 _HEALTH_CACHE: dict = {"at": 0.0, "value": None}
 _CLIENT: Client | None = None
 
@@ -75,7 +76,16 @@ def _inline_part(path: str):
         return make_degraded_result(reason="unsupported_media_type", fallback_source="none", original_error=str(exc)[:500])
 
 
-@guarded("gemini-generate-text", provider="google")
+# Chassis default timeout (15 s) fits chat-like calls, not generation-heavy
+# ones: multimodal structured extraction measures 8-20 s raw on Vertex, so the
+# default turns every slow success into 3x slow-burn retries + a false
+# timeout (E2E F11). Per-call config is the chassis-sanctioned extension
+# point (resolve_config shallow-merges it); chassis defaults untouched.
+_TEXT_GUARD_CONFIG: dict = {"timeout_ms": 60000, "retries": 1}
+_STRUCTURED_GUARD_CONFIG: dict = {"timeout_ms": 90000, "retries": 1}
+
+
+@guarded("gemini-generate-text", provider="google", config=_TEXT_GUARD_CONFIG)
 def generate_text(prompt: str, *, system: str | None = None, label: str) -> str | dict:
     messages: list[dict] = []
     if system:
@@ -126,7 +136,7 @@ def generate_text(prompt: str, *, system: str | None = None, label: str) -> str 
     return text
 
 
-@guarded("gemini-generate-structured", provider="google")
+@guarded("gemini-generate-structured", provider="google", config=_STRUCTURED_GUARD_CONFIG)
 def generate_structured(
     prompt: str,
     schema: dict,
@@ -261,34 +271,53 @@ def generate_structured(
     return make_degraded_result(reason="schema_validation_failed", fallback_source="none", original_error=json.dumps(r2["errors"])[:2000])
 
 
+def _probe_config():
+    """Liveness probe config.
+
+    E2E F16: `gemini-2.5-flash` is a thinking model — with a tiny
+    `max_output_tokens` the thought tokens consume the whole budget and the
+    response carries NO text part (finish_reason MAX_TOKENS). That made ~25 %
+    of probes report the backend as unreachable while every real call worked,
+    i.e. the pill lied to Maya. Turn thinking off for the probe and give the
+    answer real headroom. Falls back to a plain config on SDKs/models without
+    ThinkingConfig.
+    """
+    base = {"temperature": 0.0, "response_mime_type": "text/plain", "max_output_tokens": 32}
+    try:
+        return types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_budget=0), **base)
+    except Exception:
+        return types.GenerateContentConfig(**base)
+
+
 def gemini_health() -> dict:
+    """Vertex liveness for /api/health.
+
+    `reachable` means "Vertex answered this project/model/location" — that is
+    what Maya needs before pressing Diagnose. A completion that comes back
+    without an exception proves reachability even if the text is empty
+    (probe_text records what came back for the operator).
+    """
+    base = {"model": GEMINI_MODEL, "mode": "vertex", "project": settings.gcp_project, "location": settings.gcp_location}
     try:
         now = time.monotonic()
         cached = _HEALTH_CACHE.get("value")
         at = _HEALTH_CACHE.get("at", 0.0)
-        if cached is not None and (now - at) < _HEALTH_TTL_S:
+        ttl = _HEALTH_TTL_S if (cached or {}).get("reachable") else _HEALTH_TTL_FAIL_S
+        if cached is not None and (now - at) < ttl:
             return cached
-        # Probe
         resp = _client().models.generate_content(
-            model=GEMINI_MODEL,
-            contents="Reply with exactly: OK",
-            config=types.GenerateContentConfig(temperature=0.0, response_mime_type="text/plain", max_output_tokens=8),
+            model=GEMINI_MODEL, contents="Reply with exactly: OK", config=_probe_config()
         )
         text = "".join(getattr(p, "text", "") or "" for c in (resp.candidates or []) for p in (getattr(c.content, "parts", None) or []))
-        reachable = bool(text)
-        if reachable:
-            value = {"reachable": True, "model": GEMINI_MODEL, "mode": "vertex", "project": settings.gcp_project, "location": settings.gcp_location, "last_error": None}
-        else:
-            value = {"reachable": False, "model": GEMINI_MODEL, "mode": "vertex", "project": settings.gcp_project, "location": settings.gcp_location, "last_error": "empty_response"}
+        value = {**base, "reachable": True, "probe_text": text.strip()[:32], "last_error": None}
         _HEALTH_CACHE["at"] = now
         _HEALTH_CACHE["value"] = value
         return value
     except Exception as exc:
         try:
-            now = time.monotonic()
-            value = {"reachable": False, "model": GEMINI_MODEL, "mode": "vertex", "project": settings.gcp_project, "location": settings.gcp_location, "last_error": str(exc)[:500]}
-            _HEALTH_CACHE["at"] = now
+            value = {**base, "reachable": False, "probe_text": "", "last_error": str(exc)[:500]}
+            _HEALTH_CACHE["at"] = time.monotonic()
             _HEALTH_CACHE["value"] = value
             return value
         except Exception:
-            return {"reachable": False, "model": GEMINI_MODEL, "mode": "vertex", "project": "", "location": "", "last_error": "health_failed"}
+            return {"reachable": False, "model": GEMINI_MODEL, "mode": "vertex", "project": "", "location": "", "probe_text": "", "last_error": "health_failed"}

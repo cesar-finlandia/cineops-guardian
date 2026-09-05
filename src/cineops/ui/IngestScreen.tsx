@@ -50,7 +50,7 @@ export function IngestScreen(props: IngestScreenProps): JSX.Element {
         <input
           type="file"
           multiple
-          accept=".pdf,.csv,.txt"
+          accept=".pdf,.csv"
           onChange={(e) => setFiles(e.target.files ? Array.from(e.target.files) : [])}
         />
       </label>

@@ -2,17 +2,19 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import threading
 import uuid
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.platform.transport.stream_router import router as stream_router
 
-from engine.api.events import make_publisher
-from engine.api.sessions import SESSIONS, HttpApprovalGate, get_session, release
+from engine.api.events import make_publisher, recent_envelopes
+from engine.api.sessions import APPROVAL_TIMEOUT_SEC, SESSIONS, HttpApprovalGate, get_session, release
 from engine.bq.loader import bq_health, ensure_dataset, load_corpus
 from engine.mcp.grafana_mcp import mcp_health
 from engine.providers.gemini import gemini_health
@@ -35,6 +37,7 @@ class ApproveBody(BaseModel):
 
 class SeedBody(BaseModel):
     production: str
+    refresh: bool = False
 
 
 async def _run_task(trace_id: str, request: RunRequest) -> None:
@@ -57,8 +60,54 @@ async def _run_task(trace_id: str, request: RunRequest) -> None:
             pass
 
 
+def _run_in_worker(trace_id: str, request: RunRequest, server_loop: asyncio.AbstractEventLoop) -> None:
+    """Drive the agent on a dedicated worker thread.
+
+    NFR-01/NFR-05: run_diagnosis performs minutes of synchronous blocking I/O
+    (Gemini/BigQuery/MCP SDK calls with no asyncio yield points). Running it
+    as a loop task starves the server loop — pending response bodies never
+    flush, SSE stalls, /api/health stalls, and the browser sees a hung app
+    (E2E F10). The worker thread owns a private loop (asyncio.run); the two
+    loop-bound seams are bridged back with run_coroutine_threadsafe:
+    EventEnvelope publish (SSE fanout queues live on the server loop) and the
+    approval gate (its asyncio.Event + timeouts live on the server loop).
+    """
+    server_publish = make_publisher(trace_id)
+    gate = HttpApprovalGate()
+
+    async def threadsafe_publish(step_id: str, status: str, payload: dict, *, degraded: bool = False) -> None:
+        fut = asyncio.run_coroutine_threadsafe(
+            server_publish(step_id, status, payload, degraded=degraded), server_loop
+        )
+        await asyncio.wrap_future(fut)
+
+    class _ThreadGate:
+        async def wait(self, trace_id_: str, actions: list) -> list[str]:
+            fut = asyncio.run_coroutine_threadsafe(gate.wait(trace_id_, actions), server_loop)
+            return await asyncio.wait_for(
+                asyncio.wrap_future(fut), timeout=APPROVAL_TIMEOUT_SEC + 30.0
+            )
+
+    async def _main() -> None:
+        try:
+            from engine.agents.agent import run_diagnosis
+
+            result = await run_diagnosis(request, threadsafe_publish, _ThreadGate())  # type: ignore[arg-type]
+            SESSIONS[trace_id]["result"] = result
+            SESSIONS[trace_id]["status"] = "done"
+        except Exception as exc:  # never leave the UI hanging (§6 FM-04)
+            SESSIONS[trace_id]["status"] = "error"
+            SESSIONS[trace_id]["result"] = None
+            try:
+                await threadsafe_publish("summarize-run", "error", {"error": str(exc)})
+            except Exception:
+                pass
+
+    asyncio.run(_main())
+
+
 @app.post("/api/run")
-async def post_run(body: RunRequest, background: BackgroundTasks) -> dict:
+async def post_run(body: RunRequest) -> dict:
     trace_id = body.trace_id or str(uuid.uuid4())
     SESSIONS[trace_id] = {
         "status": "running",
@@ -68,7 +117,12 @@ async def post_run(body: RunRequest, background: BackgroundTasks) -> dict:
         "approved": [],
     }
     request = body.model_copy(update={"trace_id": trace_id})
-    background.add_task(_run_task, trace_id, request)
+    # Worker thread (not BackgroundTasks): the agent blocks synchronously, so
+    # a loop task would hold the response body + SSE + health hostage (F10).
+    server_loop = asyncio.get_running_loop()
+    threading.Thread(
+        target=_run_in_worker, args=(trace_id, request, server_loop), daemon=True
+    ).start()
     return {"trace_id": trace_id}
 
 
@@ -94,17 +148,34 @@ async def get_result(trace_id: str):
     return session["result"]
 
 
+@app.get("/api/events/recent")
+async def get_recent_events(trace_id: str, after: int = -1) -> dict:
+    """Replay envelopes published for trace_id with sequence > after (E2E F13).
+
+    Gap insurance for the broadcast-only SSE hub: subscribers that connected
+    late or reconnected after the chassis 15 s idle close fetch what they
+    missed. Unknown trace_id yields an empty list (never 404: a run may not
+    have published anything yet).
+    """
+    return {"trace_id": trace_id, "envelopes": recent_envelopes(trace_id, after=after)}
+
+
 # ...continued (same file engine/api/app.py) — copy verbatim.
 @app.post("/api/seed")
 async def post_seed(body: SeedBody) -> dict:
-    # DP-BQ binding signature: load_corpus(corpus_dir, *, production).
-    outcome = load_corpus("engine/rag/corpus", production=body.production)
+    # DP-BQ binding signature: load_corpus(corpus_dir, *, production, refresh).
+    # refresh=False is the fast ensure path (COUNT check, no reload).
+    outcome = load_corpus("engine/rag/corpus", production=body.production, refresh=body.refresh)
     if not isinstance(outcome, dict) or "shots" not in outcome:
         from src.resilience.degraded import is_degraded_result as _is_deg
 
         reason = outcome.get("reason", "degraded") if isinstance(outcome, dict) else "degraded"
         raise HTTPException(status_code=502, detail=f"seed degraded: {reason}")
-    return {"shots": outcome["shots"], "metrics": outcome["metrics"]}
+    return {
+        "shots": outcome["shots"],
+        "metrics": outcome["metrics"],
+        "refreshed": bool(outcome.get("refreshed", False)),
+    }
 
 
 @app.post("/api/upload")
@@ -158,7 +229,15 @@ async def get_health() -> dict:
 
 @app.on_event("startup")
 async def _startup() -> None:
-    ensure_dataset()
+    # NFR-01: BigQuery may be unreachable (no ADC off-GCP) and credential /
+    # endpoint lookup can stall for tens of seconds. Bound the whole call so
+    # boot never blocks: on failure _startup logs and the seam still serves;
+    # /api/health reports bigquery.reachable:false and the agent degrades
+    # per-step instead.
+    try:
+        await asyncio.wait_for(asyncio.to_thread(ensure_dataset), timeout=20.0)
+    except Exception as exc:  # noqa: BLE001 - startup must never hang the seam
+        logging.getLogger("engine.api.app").warning("[startup] ensure_dataset degraded: %s: %s", type(exc).__name__, exc)
 
 
 def _mount_static() -> None:

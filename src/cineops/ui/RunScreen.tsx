@@ -21,6 +21,10 @@ export interface RunScreenProps {
   envelopes?: EventEnvelope[];
   onReconnect?: () => void;
   onReset?: () => void;
+  // E2E F13: the replay poller keeps envelopes flowing across chassis SSE
+  // idle-closes. While it is alive the run is live even if the socket died,
+  // so the scary "Stream error" line stays hidden (Reconnect still offered).
+  pollAlive?: boolean;
 }
 
 function stepStatus(state: RunState, envelopes: EventEnvelope[], id: string): string {
@@ -32,7 +36,7 @@ function stepStatus(state: RunState, envelopes: EventEnvelope[], id: string): st
 }
 
 export function RunScreen(props: RunScreenProps): JSX.Element {
-  const { state, streamStatus, onApprove, approving, approved, envelopes = [], onReconnect, onReset } = props;
+  const { state, streamStatus, onApprove, approving, approved, envelopes = [], onReconnect, onReset, pollAlive = false } = props;
 
   if (state.status === "error") {
     return (
@@ -47,21 +51,33 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
     <section className="cineops-run" data-screen="run">
       <DegradedBanner visible={state.degraded} reason={state.degradedReason} />
       {streamStatus === "connecting" ? <p data-testid="connecting">Connecting to run stream…</p> : null}
-      {streamStatus === "error" ? (
+      {streamStatus === "error" && !pollAlive ? (
         <p>
           Stream error — retrying…{onReconnect ? <button onClick={onReconnect}>Reconnect</button> : null}
         </p>
       ) : null}
+      {/* FR-10: exactly one progress list covering the fixed 8-step run.
+          The chassis StepStatusIndicator (read-only, envelope-driven) renders
+          the steps the run has reached; the roadmap below appends the steps it
+          has not reached yet, which the chassis component cannot know about
+          (its status enum has no "pending"). Rendering both lists in full
+          duplicated every step on screen and in the DOM (E2E F17) — Maya saw
+          the same eight rows twice. One step_id, one row, all eight visible
+          from the first second of the run. */}
       <StepStatusIndicator envelopes={envelopes} title="Progress" />
-      <ol className="cineops-steps">
-        {STEP_IDS.map((id) => (
-          <li key={id} data-step-id={id} data-status={stepStatus(state, envelopes, id)}>
-            <span>{id}</span>
-            <span>{stepStatus(state, envelopes, id)}</span>
-            {state.streamDeltas[id] ? <StreamingTextRenderer envelopes={envelopes} stepId={id} /> : null}
+      <ol className="cineops-steps ui-step-status__steps">
+        {STEP_IDS.filter((id) => stepStatus(state, envelopes, id) === "pending").map((id) => (
+          <li key={id} className="ui-step ui-step--pending" data-step-id={id} data-status="pending">
+            <span className="ui-badge ui-badge--pending">pending</span>
+            <span className="ui-step__label">{id}</span>
           </li>
         ))}
       </ol>
+      <div className="cineops-deltas">
+        {STEP_IDS.filter((id) => state.streamDeltas[id]).map((id) => (
+          <StreamingTextRenderer key={id} envelopes={envelopes} stepId={id} />
+        ))}
+      </div>
       <div className="cineops-evidence">
         {state.evidence.map((e, i) => (
           <EvidenceCard

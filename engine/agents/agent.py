@@ -47,8 +47,11 @@ _AGENT: Agent | None = None
 
 _FALLBACK_STEPS = [
     {"step_no": 1, "kind": "dashboards", "tool_hint": "search_dashboards", "args": {"query": "cineops"}, "why": "locate render-queue dashboard"},
-    {"step_no": 2, "kind": "metrics", "tool_hint": "query_prometheus", "args": {"query": "render_queue_latency_seconds"}, "why": "render latency in window"},
-    {"step_no": 3, "kind": "logs", "tool_hint": "query_loki_logs", "args": {"query": "render job failed"}, "why": "failed jobs in window"},
+    # Canonical demo metric (scripts/seed-grafana.ts + local E2E seeder agree;
+    # the dashboard histogram panel is aspirational). LogQL valid on both
+    # stacks (production label exists in Cloud and local Loki).
+    {"step_no": 2, "kind": "metrics", "tool_hint": "query_prometheus", "args": {"query": "cineops_render_queue_latency_seconds"}, "why": "render latency in window"},
+    {"step_no": 3, "kind": "logs", "tool_hint": "query_loki_logs", "args": {"query": "{production=\"NEON HOLLOW\"} |= \"failed\""}, "why": "failed jobs in window"},
 ]
 _VALID_KINDS = ("metrics", "logs", "traces", "dashboards", "alerts", "incidents")
 
@@ -59,17 +62,32 @@ def _read_prompt(name: str) -> str:
 
 def tool_load_context(question: str, production: str) -> dict:
     """Load shots + commitments for a production. Returns {"shots": [...], "commitments": [...]}."""
+    from concurrent.futures import ThreadPoolExecutor
+
     from engine.ingest.shot_list import extract_shot_list
     from engine.ingest.memo import extract_commitments
     from engine.ingest.normalize import normalize_context
 
     shots = extract_shot_list("engine/rag/corpus/shots/shot_list.csv", production=production)
     memos_dir = Path("engine/rag/corpus/memos")
+    pdfs = sorted(p for p in memos_dir.glob("*.pdf") if p.name != "01-vfx-delivery-memo.pdf")
+    # legacy alias of memo 01 skipped to avoid double counting (see below)
+
+    def _one(pdf: Path) -> list:
+        try:
+            return extract_commitments(str(pdf), production=production)
+        except Exception:
+            return []
+
+    # NFR-05: multimodal extraction is ~20 s per memo on Vertex; sequential
+    # reads blow the 90 s run budget structurally. ex.map preserves pdf order,
+    # so output stays deterministic; per-file failures degrade to [] (same as
+    # an empty extraction today).
     commitments = []
-    for pdf in sorted(memos_dir.glob("*.pdf")):
-        if pdf.name == "01-vfx-delivery-memo.pdf":
-            continue  # legacy alias of memo 01; skip to avoid double counting
-        commitments.extend(extract_commitments(str(pdf), production=production))
+    if pdfs:
+        with ThreadPoolExecutor(max_workers=min(6, len(pdfs))) as ex:
+            for comms in ex.map(_one, pdfs):
+                commitments.extend(comms)
     shots, commitments = normalize_context(shots, commitments)
     return {"shots": [s.model_dump() for s in shots], "commitments": [c.model_dump() for c in commitments]}
 
@@ -86,14 +104,53 @@ def _fallback_plan(question: str, window_from: str, window_to: str) -> dict:
     }
 
 
+def _inventory_block() -> str:
+    """Known-good query inventory for the planner (E2E F16).
+
+    Gemini invents label/metric names when unaided (e.g. job="dailies-scheduler"),
+    which yields empty evidence. Ground it with the demo corpus facts: the
+    canonical metric both seeders write, the dashboard UID, and a valid LogQL
+    selector. Dashboard panel exprs are included verbatim as examples.
+    """
+    lines = [
+        '- metric: cineops_render_queue_latency_seconds (labels: production, shot_id, vendor, status)',
+        '- logs selector: {production="NEON HOLLOW"} with filter |= "failed"',
+    ]
+    try:
+        data = json.loads(Path("engine/rag/corpus/CORPUS.json").read_text(encoding="utf-8"))
+        lines.append(f"- dashboard: uid={data.get('dashboard_uid', 'cineops-render-queue')} production={data.get('production', 'NEON HOLLOW')}")
+    except Exception:
+        lines.append("- dashboard: uid=cineops-render-queue production=NEON HOLLOW")
+    try:
+        dash = json.loads(Path("grafana/dashboard.json").read_text(encoding="utf-8"))
+        for p in dash.get("panels", []) or []:
+            for t in (p.get("targets", None) or []) or []:
+                expr = t.get("expr")
+                if isinstance(expr, str) and expr:
+                    lines.append(f"- panel example ({p.get('title', '?')}): {expr}")
+    except Exception:
+        pass
+    return "\n".join(lines)
+
+
 def _clamp_plan(out: dict) -> dict | None:
+    # Sanitize-then-validate (E2E F16): the model adds step-level window keys
+    # and bare-string args against the strict schema. Drop unknown step keys
+    # and salvage string args into {"query": ...} instead of discarding an
+    # otherwise good plan to the fallback.
+    _STEP_KEYS = ("step_no", "kind", "tool_hint", "args", "why")
     try:
         steps = list(out.get("steps", []) or [])[:MAX_PLAN_STEPS]
         kept = []
         for s in steps:
             if not isinstance(s, dict):
                 continue
-            if s.get("kind") not in _VALID_KINDS or not isinstance(s.get("args"), dict):
+            s = {k: s[k] for k in _STEP_KEYS if k in s}
+            if s.get("kind") not in _VALID_KINDS or "args" not in s:
+                continue
+            if isinstance(s["args"], str):
+                s["args"] = {"query": s["args"]}
+            if not isinstance(s.get("args"), dict):
                 continue
             kept.append(s)
         for i, s in enumerate(kept):
@@ -114,7 +171,7 @@ def tool_plan_queries(question: str, window_from: str, window_to: str) -> dict:
     """Plan Grafana work as a validated QueryPlan dict (clamped to MAX_PLAN_STEPS)."""
     template = _read_prompt("plan_queries.md")
     system = _read_prompt("system.md")
-    prompt = template.replace("{{question}}", question).replace("{{window_from}}", window_from).replace("{{window_to}}", window_to)
+    prompt = template.replace("{{question}}", question).replace("{{window_from}}", window_from).replace("{{window_to}}", window_to).replace("{{inventory}}", _inventory_block())
     out = generate_structured(prompt, load_schema("query-plan"), system=system, label="agent-plan-queries")
     if is_degraded_result(out):
         return {**_fallback_plan(question, window_from, window_to), "_degraded": "plan-degraded"}

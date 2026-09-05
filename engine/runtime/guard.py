@@ -19,13 +19,48 @@ T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
 _CACHE = create_golden_cache()
 
+def _cacheable(value: Any) -> Any:
+    """JSON-safe view of a guarded return value (NFR-02, E2E F18).
+
+    The golden cache stores JSON. `mcp_call` returns a `GrafanaEvidence` and
+    `propose_remediation` a `list[RemediationAction]`, so every put for those
+    two seams failed ("value not JSON-serializable") and the offline rung had
+    nothing to replay — exactly the evidence and actions the fallback demo
+    needs. Pydantic models are dumped structurally; everything else passes
+    through untouched.
+    """
+    dump = getattr(value, "model_dump", None)
+    if callable(dump):
+        try:
+            return dump(mode="json")
+        except Exception:
+            return dump()
+    if isinstance(value, list):
+        return [_cacheable(v) for v in value]
+    if isinstance(value, tuple):
+        return [_cacheable(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _cacheable(v) for k, v in value.items()}
+    return value
+
+
+def _identity(value: T) -> T:
+    return value
+
+
 def _derive_key(label: str, args: tuple, kwargs: dict) -> str:
     raw = json.dumps({"label": label, "args": args, "kwargs": kwargs},
                      sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 def guarded(label: str, *, provider: str = "google",
-            cache_key: str | None = None, config: dict | None = None) -> Callable[[F], F]:
+            cache_key: str | None = None, config: dict | None = None,
+            revive: Callable[[Any], Any] | None = None) -> Callable[[F], F]:
+    """`revive` rehydrates a value that came back from the golden cache (a
+    plain dict/list) into the type the call site declares. It must be a no-op
+    for live values, so it only ever runs on cache-shaped input (E2E F18)."""
+    revive_fn = revive or _identity
+
     def decorator(fn: F) -> F:
         metered = with_cost_guardrail(fn, {"provider": provider, "label": label})
         key = cache_key or label
@@ -35,7 +70,7 @@ def guarded(label: str, *, provider: str = "google",
             def forced_sync(*a: Any, **k: Any) -> Any:
                 hit = _CACHE.get(key) or _CACHE.get("replay::" + key)
                 if hit is not None:
-                    return hit
+                    return revive_fn(hit)
                 return make_degraded_result(reason="forced_degraded", fallback_source="none",
                     original_error="RES_FORCED_DEGRADED=1 and no golden entry for key " + key)
             @functools.wraps(fn)
@@ -47,7 +82,8 @@ def guarded(label: str, *, provider: str = "google",
             async def recording_async(*a: Any, **k: Any) -> Any:
                 result = await guarded_fn(*a, **k)
                 if not is_degraded_result(result):
-                    _CACHE.put(cache_key or _derive_key(label, a, k), result)
+                    _CACHE.put(cache_key or _derive_key(label, a, k), _cacheable(result))
+                    return revive_fn(result)
                 return result
             return recording_async
         @functools.wraps(fn)
@@ -56,7 +92,8 @@ def guarded(label: str, *, provider: str = "google",
             if inspect.isawaitable(result):
                 return result
             if not is_degraded_result(result):
-                _CACHE.put(cache_key or _derive_key(label, a, k), result)
+                _CACHE.put(cache_key or _derive_key(label, a, k), _cacheable(result))
+                return revive_fn(result)
             return result
         return recording_sync
     return decorator

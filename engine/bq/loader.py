@@ -21,7 +21,6 @@ _logger = logging.getLogger("engine.bq.loader")
 SCHEMA_SQL_PATH: str = str(Path(__file__).resolve().parent / "schema.sql")
 
 SNAPSHOT_MAX_ROWS: int = 100
-LOAD_BATCH_SIZE: int = 500
 TREND_DEFAULT_DAYS: int = 7
 
 _CLIENT: bigquery.Client | None = None
@@ -47,11 +46,13 @@ def ensure_dataset() -> None:
     try:
         client.get_dataset(dataset_ref)
     except Exception:
-        client.create_dataset(
-            bigquery.Dataset(dataset_ref),
-            location=settings.gcp_location or None,
-            exists_ok=True,
-        )
+        dataset = bigquery.Dataset(dataset_ref)
+        # Location lives on the Dataset object (create_dataset takes no
+        # location kwarg); without it the create 404/400s and boot + /api/seed
+        # can never self-provision.
+        if settings.gcp_location:
+            dataset.location = settings.gcp_location
+        client.create_dataset(dataset, exists_ok=True)
     sql = Path(SCHEMA_SQL_PATH).read_text(encoding="utf-8")
     if settings.bq_dataset != "cineops":
         sql = sql.replace("`cineops.", f"`{settings.bq_dataset}.")
@@ -65,9 +66,28 @@ def ensure_dataset() -> None:
     return None
 
 
-@guarded("bq-load-corpus", provider="google")
-def load_corpus(corpus_dir: str, *, production: str) -> dict:
+@guarded("bq-load-corpus", provider="google",
+         config={"timeout_ms": 300000, "retries": 1})  # load jobs run ~50 s; E2E F11
+def load_corpus(corpus_dir: str, *, production: str, refresh: bool = False) -> dict:
     client = _client()
+    if not refresh:
+        # Fast ensure path: seeding costs ~50 s (two load jobs), so a plain
+        # "make sure the demo data is there" must not reload every time —
+        # every Diagnose would hang on provisioning with a dead UI.
+        try:
+            counts = {}
+            for table in ("shots", "render_queue_metrics"):
+                job = client.query(
+                    f"SELECT COUNT(*) AS n FROM `{_table_id(table)}` WHERE production = @p",
+                    job_config=bigquery.QueryJobConfig(
+                        query_parameters=[bigquery.ScalarQueryParameter("p", "STRING", production)]
+                    ),
+                )
+                counts[table] = int(list(job.result())[0].n)
+            if counts.get("shots", 0) > 0 and counts.get("render_queue_metrics", 0) > 0:
+                return {"shots": counts["shots"], "metrics": counts["render_queue_metrics"], "refreshed": False}
+        except Exception:
+            pass  # tables missing or unreadable → fall through to full load
     shots_csv = Path(corpus_dir) / "shots" / "shot_list.csv"
     metrics_csv = Path(corpus_dir) / "telemetry" / "render_queue_metrics.csv"
     # Missing file propagates into @guarded as DegradedResult.
@@ -130,26 +150,22 @@ def load_corpus(corpus_dir: str, *, production: str) -> dict:
             }
         )
 
-    for table, col in (("shots", "shots"), ("render_queue_metrics", "metrics")):
-        _ = col
-        client.query(
-            f"DELETE FROM `{_table_id(table)}` WHERE production = @p",
-            job_config=bigquery.QueryJobConfig(
-                query_parameters=[
-                    bigquery.ScalarQueryParameter("p", "STRING", production)
-                ]
-            ),
-        ).result()
-
+    # Idempotent replace via WRITE_TRUNCATE load jobs (never DELETE+DML:
+    # freshly streamed rows sit in the streaming buffer, which rejects
+    # UPDATE/DELETE for up to ~90 min — a re-seed must not 502 on that).
     for inserts, table in ((shot_inserts, "shots"), (metric_inserts, "render_queue_metrics")):
-        for i in range(0, len(inserts), LOAD_BATCH_SIZE):
-            batch = inserts[i : i + LOAD_BATCH_SIZE]
-            if not batch:
-                continue
-            errors = client.insert_rows_json(_table_id(table), batch)
-            if errors:
-                raise RuntimeError(str(errors))
-    return {"shots": len(shot_inserts), "metrics": len(metric_inserts)}
+        if not inserts:
+            continue
+        table_id = _table_id(table)
+        schema = client.get_table(table_id).schema
+        job_config = bigquery.LoadJobConfig(
+            schema=schema,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        )
+        job = client.load_table_from_json(inserts, table_id, job_config=job_config)
+        job.result()
+    return {"shots": len(shot_inserts), "metrics": len(metric_inserts), "refreshed": True}
 
 
 @guarded("bq-persist-snapshot", provider="google")
@@ -171,7 +187,7 @@ def persist_snapshot(trace_id: str, evidence: list[GrafanaEvidence]) -> dict:
                 "row_count": e.row_count,
                 "took_ms": e.took_ms,
                 "degraded": e.degraded,
-                "rows": json.dumps(truncated, sort_keys=False, separators=(",", ":"), default=str),
+                "rows_json": json.dumps(truncated, sort_keys=False, separators=(",", ":"), default=str),
                 "captured_at": now_iso,
             }
         )
