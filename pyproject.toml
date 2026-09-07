@@ -22,7 +22,7 @@ dependencies = [
   "google-genai",
   "google-cloud-aiplatform",
   "google-cloud-bigquery",
-  "mcp",
+  "mcp==1.29.1",
   "fastapi",
   "uvicorn[standard]",
   "python-multipart",
