@@ -2,6 +2,7 @@
 
 - PUBLIC_URL: https://cineops-guardian-7h3vdn6jtq-uc.a.run.app
 - Service: `cineops-guardian`, region: `us-central1`, project: `hacka-2026-09-agentic-cinema2` (deployed 2026-09-07, revision 00003; health `ok:true`, Grafana MCP 81 tools via stdio)
+- Revision 00006 (2026-09-08): first-envelope animation, MCP write-path refresh, grounded summary prose; health `ok:true`, Grafana MCP 81 tools via stdio
 - Image: built from repo-root `Dockerfile` via `gcloud run deploy --source .`
 - Reproduction:
   1. `PROJECT_ID=<id> REGION=<region> npm run deploy:cloudrun`
