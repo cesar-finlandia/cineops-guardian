@@ -150,52 +150,55 @@ async function main(): Promise<void> {
     .split("\n")
     .filter((l) => l.trim().length > 0);
   // Cloud push window: Grafana Cloud's out-of-order gate rejects anything more
-  // than ~hours old, so the full 7-day grid can never land there regardless of
-  // shifting (shifting preserves the grid's width). The demo only ever queries
-  // the 90-minute incident window (+ margin for range queries); long-range
-  // trend context lives in BigQuery, not Grafana. So for a Cloud-targeted
-  // push (SEED_SHIFT_TO_NOW=1) keep [from-3h, to+1h] and anchor the shift on
-  // the incident end. Local/docker pushes keep the full grid (long retention).
+  // than ~tens of minutes old, so neither the 7-day grid nor a shifted copy
+  // of it can ever land there. The demo only queries the 90-minute incident
+  // window (long-range trend context lives in BigQuery, not Grafana), so for
+  // a Cloud-targeted push (SEED_SHIFT_TO_NOW=1) the incident is linearly
+  // re-mapped onto [now-25min, now-5min]: values and cross-source alignment
+  // preserved, absolute clock fresh. Local/docker pushes keep real timestamps
+  // (long retention there).
   const winFrom = Date.parse(manifest.incident_window.from);
   const winTo = Date.parse(manifest.incident_window.to);
   const shiftToNow = ["1", "true", "yes"].includes((process.env["SEED_SHIFT_TO_NOW"] ?? "").toLowerCase());
+  const EFF_END = Date.now() - 5 * 60 * 1000;
+  const EFF_START = EFF_END - 20 * 60 * 1000;
+  const mapTs = (iso: string): number => {
+    const t = Date.parse(iso);
+    const f = Math.min(1, Math.max(0, (t - winFrom) / (winTo - winFrom)));
+    return Math.round(EFF_START + f * (EFF_END - EFF_START));
+  };
   let metrics = metricsAll;
   let logs = logsAll;
+  // tsOf resolves a corpus timestamp to the epoch ms actually pushed.
+  let tsOf = (iso: string): number => Date.parse(iso);
   if (shiftToNow) {
-    const keepFrom = winFrom - 3 * 3600 * 1000;
-    const keepTo = winTo + 1 * 3600 * 1000;
     metrics = metricsAll.filter((m) => {
       const t = Date.parse(m["ts"] as string);
-      return t >= keepFrom && t <= keepTo;
+      return t >= winFrom && t <= winTo;
     });
     logs = logsAll.filter((l) => {
       try {
         const t = Date.parse((JSON.parse(l) as { ts: string }).ts);
-        return t >= keepFrom && t <= keepTo;
+        return t >= winFrom && t <= winTo;
       } catch {
         return false;
       }
     });
-    console.log(`seed:grafana: Cloud window filter kept ${metrics.length}/${metricsAll.length} metric rows, ${logs.length}/${logsAll.length} log lines`);
+    tsOf = (iso: string): number => mapTs(iso);
+    console.log(`seed:grafana: Cloud re-map kept ${metrics.length}/${metricsAll.length} metric rows, ${logs.length}/${logsAll.length} log lines`);
   }
 
-  // Timestamp-shift rule (DP-CORPUS §6 FM-01): keep generation literals on disk;
-  // shift in memory only. The 30-day rule covers retention; SEED_SHIFT_TO_NOW=1
-  // additionally handles Grafana Cloud's short out-of-order window, which
-  // rejects days-old samples on first push (err-mimir-sample-timestamp-too-old)
-  // even when retention would allow them. Shifting moves the whole incident
-  // (metrics + logs share tsOf) so the printed effective window below is what
-  // the Diagnose form's Window start/end must be set to for that seed.
+  // Timestamp rule (DP-CORPUS §6 FM-01): generation literals stay frozen on
+  // disk. Local pushes use real timestamps (long retention). Cloud pushes
+  // (shiftToNow, mapped above) already resolve through tsOf; only the legacy
+  // 30-day retention shift still needs shiftMs here.
   const maxTs = Math.max(...metrics.map((m) => Date.parse(m["ts"] as string)));
   let shiftMs = 0;
-  if (shiftToNow) {
-    shiftMs = Date.now() - 30 * 60 * 1000 - winTo;
-    console.log(`seed:grafana: shifted timestamps by ${Math.round(shiftMs / 1000)}s (incident end → 30 min ago)`);
-  } else if (Date.now() - maxTs > 30 * 24 * 3600 * 1000) {
+  if (!shiftToNow && Date.now() - maxTs > 30 * 24 * 3600 * 1000) {
     shiftMs = Date.now() - 2 * 3600 * 1000 - maxTs;
+    tsOf = (iso: string): number => Date.parse(iso) + shiftMs;
     console.log(`seed:grafana: shifted timestamps by ${Math.round(shiftMs / 1000)}s to fit retention`);
   }
-  const tsOf = (iso: string): number => Date.parse(iso) + shiftMs;
 
   // 1) Metrics push: 500 samples per request, split further when one raw
   // block would exceed 60_000 uncompressed bytes (keeps every POST a
@@ -245,6 +248,9 @@ async function main(): Promise<void> {
   }
 
   // 2) Logs push: 200 lines per request, grouped by vendor stream labels.
+  // The embedded "ts" inside each line's JSON is rewritten to the pushed
+  // timestamp as well, so evidence rows read consistently on camera.
+  const fmtIso = (ms: number): string => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
   const LOG_BATCH = 200;
   for (let i = 0; i < logs.length; i += LOG_BATCH) {
     const batch = logs.slice(i, i + LOG_BATCH);
@@ -252,8 +258,17 @@ async function main(): Promise<void> {
     for (const line of batch) {
       const obj = JSON.parse(line) as { ts: string; job_id: string };
       const vendor = metrics.find((m) => m["job_id"] === obj.job_id)?.["vendor"] ?? "unknown";
+      const pushedTs = fmtIso(tsOf(obj.ts));
+      let lineOut = line;
+      try {
+        const o = JSON.parse(line) as Record<string, unknown>;
+        o["ts"] = pushedTs;
+        lineOut = JSON.stringify(o);
+      } catch {
+        lineOut = line;
+      }
       const arr = byVendor.get(vendor) ?? [];
-      arr.push({ ts: obj.ts, line });
+      arr.push({ ts: pushedTs, line: lineOut });
       byVendor.set(vendor, arr);
     }
     const streams = [...byVendor.entries()].map(([vendor, vals]) => ({
@@ -304,9 +319,12 @@ async function main(): Promise<void> {
   );
 
   console.log("seed:grafana: dashboard_uid=cineops-render-queue panel_id=1 provisioned");
-  const eff = (iso: string): string => new Date(Date.parse(iso) + shiftMs).toISOString().replace(/\.\d{3}Z$/, "Z");
   console.log(`seed:grafana: incident window ${manifest.incident_window.from} → ${manifest.incident_window.to}`);
-  if (shiftMs !== 0) {
+  if (shiftToNow) {
+    const fmt = (ms: number): string => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
+    console.log(`seed:grafana: EFFECTIVE window after re-map (use in Diagnose form): ${fmt(tsOf(manifest.incident_window.from))} → ${fmt(tsOf(manifest.incident_window.to))}`);
+  } else if (shiftMs !== 0) {
+    const eff = (iso: string): string => new Date(Date.parse(iso) + shiftMs).toISOString().replace(/\.\d{3}Z$/, "Z");
     console.log(`seed:grafana: EFFECTIVE window after shift (use in Diagnose form): ${eff(manifest.incident_window.from)} → ${eff(manifest.incident_window.to)}`);
   }
 }
