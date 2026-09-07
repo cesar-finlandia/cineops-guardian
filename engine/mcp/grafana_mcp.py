@@ -605,6 +605,15 @@ def mcp_write_annotation(action: RemediationAction) -> Any:
     uid, panel = _dashboard_target()
     dashboard_uid = action.dashboard_uid or uid
     panel_id = action.panel_id if action.panel_id is not None else panel
+    # resolve_tool reads the module-global tool cache, which nothing populates
+    # in a bare run process (reads don't list tools): without this refresh
+    # every write silently drops to the REST fallback even when the MCP
+    # annotation tool exists. Best-effort — a listing failure keeps the
+    # fallback, never breaks the write.
+    try:
+        mcp_tool_names()
+    except Exception:
+        pass
     tool = resolve_tool("annotation")
     if tool is not None:
         args = {
@@ -664,6 +673,11 @@ def mcp_write_incident_note(action: RemediationAction) -> Any:
     uid, panel = _dashboard_target()
     dashboard_uid = action.dashboard_uid or uid
     panel_id = action.panel_id if action.panel_id is not None else panel
+    # Same tool-cache refresh as mcp_write_annotation (see note there).
+    try:
+        mcp_tool_names()
+    except Exception:
+        pass
     tool = resolve_tool("incident-note")
     if tool is not None:
         args = {

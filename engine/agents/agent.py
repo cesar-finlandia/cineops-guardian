@@ -115,6 +115,7 @@ def _inventory_block() -> str:
     lines = [
         '- metric: cineops_render_queue_latency_seconds (labels: production, shot_id, vendor, status)',
         '- logs selector: {production="PALS"} with filter |= "failed"',
+        '- prefer simple per-shot selectors (plain metric or LogQL stream); avoid histogram_quantile/aggregations unless bucket series exist — aggregations collapse the per-shot attribution the rules need',
     ]
     try:
         data = json.loads(Path("engine/rag/corpus/CORPUS.json").read_text(encoding="utf-8"))
@@ -231,6 +232,44 @@ def tool_correlate(evidence: list[dict]) -> dict:
     return {"findings": [f.model_dump() for f in findings], "actions": [a.model_dump() for a in actions]}
 
 
+def _summary_facts(run: dict) -> str:
+    """Deterministic facts block for the summarizer (A8 grounding).
+
+    The model previously received findings + totals only, so with no actions
+    or receipts in context it wrote "No actions are proposed / No writes were
+    applied" even when writes had succeeded. These lines are computed, not
+    generated — the prompt orders the model to report them verbatim.
+    """
+    try:
+        findings = run.get("findings", []) or []
+        actions = run.get("actions", []) or []
+        receipts = run.get("receipts", []) or []
+        totals = run.get("totals", {}) or {}
+        by_level: dict[str, int] = {}
+        for f in findings:
+            lv = str((f.get("level") if isinstance(f, dict) else getattr(f, "level", "?")) or "?")
+            by_level[lv] = by_level.get(lv, 0) + 1
+        by_kind: dict[str, int] = {}
+        for a in actions:
+            k = str((a.get("kind") if isinstance(a, dict) else getattr(a, "kind", "?")) or "?")
+            by_kind[k] = by_kind.get(k, 0) + 1
+        ok_lines = []
+        for r in receipts:
+            g = (lambda k, d="": (r.get(k, d) if isinstance(r, dict) else getattr(r, k, d)))
+            ok_lines.append(f"- {g('action_id')}: ok={g('ok')} via {g('mcp_tool')} (path {g('path')}) link={g('grafana_link') or 'none'}")
+        lines = [
+            "VERIFIED RUN FACTS (report these numbers verbatim; never contradict them):",
+            f"- findings: {len(findings)} {by_level}",
+            f"- actions proposed: {len(actions)} {by_kind}",
+            f"- write receipts: {len(receipts)}",
+            *ok_lines,
+            f"- totals: {totals}",
+        ]
+        return "\n".join(lines)
+    except Exception:
+        return "VERIFIED RUN FACTS unavailable (malformed run dict)."
+
+
 def tool_summarize(run: dict) -> dict:
     """Render the run summary markdown. Returns {"summary_markdown": str}."""
     template = _read_prompt("summarize_run.md")
@@ -239,7 +278,8 @@ def tool_summarize(run: dict) -> dict:
         run_json = json.dumps(run, sort_keys=True, default=str)
     except Exception:
         run_json = str(run)
-    prompt = template.replace("{{run_json}}", run_json)
+    facts = _summary_facts(run if isinstance(run, dict) else {})
+    prompt = template.replace("{{run_json}}", run_json) + "\n\n" + facts + "\n"
     out = generate_text(prompt, system=system, label="agent-summarize")
     if is_degraded_result(out):
         reasons = out.get("reason", "degraded")
@@ -282,10 +322,14 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
         except Exception:
             pass
 
-    # A1 load-context.
+    # A1 load-context. The started envelope goes out BEFORE the slow work
+    # (CSV parse + up to 6 parallel Gemini memo reads, ~1 min): it is the
+    # first envelope of the whole run, and the UI's row-1 spinner + reel
+    # depend on it. Without this the timeline sits all-pending for a minute.
     from engine.schema.domain import ProductionShot, DeliveryCommitment
 
     try:
+        await _pub("load-context", "started", {"corpus": request.corpus, "files": list(request.uploads or [])})
         ctx = tool_load_context(request.question, request.production)
         shots = [ProductionShot(**s) for s in ctx["shots"]]
         commitments = [DeliveryCommitment(**c) for c in ctx["commitments"]]
@@ -432,7 +476,13 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
     saved = round(sum(float(a.hours_saved or 0.0) for a in actions[:1]), 1)
     totals = {"shots": len(shots), "blocked": blocked, "high": high, "at_risk_hours": at_risk, "hours_saved": saved, "mcp_calls": mcp_calls}
     try:
-        summary_out = tool_summarize({"trace_id": trace_id, "findings": [f.model_dump() for f in findings], "totals": totals})
+        summary_out = tool_summarize({
+            "trace_id": trace_id,
+            "findings": [f.model_dump() for f in findings],
+            "actions": [a.model_dump() for a in actions],
+            "receipts": [r.model_dump() for r in receipts],
+            "totals": totals,
+        })
         summary_md = summary_out.get("summary_markdown", "")
     except Exception as exc:
         summary_md = f"summary unavailable (degraded: {exc})"
