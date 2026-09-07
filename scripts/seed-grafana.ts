@@ -57,6 +57,32 @@ function writeRequest(series: number[][]): Buffer {
   return Buffer.from(out);
 }
 
+// --- CRC32C (Castagnoli) + masked checksum for snappy framing ---
+// Table-driven, reflected polynomial 0x82F63B78. Pure TS: no runtime dep.
+const CRC32C_TABLE: number[] = (() => {
+  const t: number[] = [];
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0x82f63b78 ^ (c >>> 1) : c >>> 1;
+    t.push(c >>> 0);
+  }
+  return t;
+})();
+
+function crc32c(buf: Buffer): number {
+  let crc = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) crc = CRC32C_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+// Snappy framing masks the checksum of each UNCOMPRESSED chunk:
+// masked = ((crc >> 15) | (crc << 17)) + 0xa282ead8 (mod 2^32), little-endian.
+function maskedCrc(chunk: Buffer): number[] {
+  const c = crc32c(chunk);
+  const m = (((c >>> 15) | (c << 17)) + 0xa282ead8) >>> 0;
+  return [m & 0xff, (m >>> 8) & 0xff, (m >>> 16) & 0xff, (m >>> 24) & 0xff];
+}
+
 // --- minimal snappy framing (stream identifier + literal-only chunks) ---
 function snappyCompress(raw: Buffer): Buffer {
   const parts: Buffer[] = [Buffer.from([0x82, 0x53, 0x4e, 0x41, 0x50, 0x50, 0x59, 0x00, 0x00, 0x00])];
@@ -64,7 +90,8 @@ function snappyCompress(raw: Buffer): Buffer {
   while (offset < raw.length) {
     const chunk = raw.subarray(offset, Math.min(offset + 32768, raw.length));
     offset += chunk.length;
-    const body: number[] = [...varint(chunk.length)];
+    // Chunk payload = 4-byte masked checksum, then the literal run (tag + bytes).
+    const body: number[] = [...maskedCrc(chunk)];
     // single literal element header: (len-1)<<2 | 00, 60+ encoding for len>60
     const n = chunk.length;
     if (n <= 60) {
