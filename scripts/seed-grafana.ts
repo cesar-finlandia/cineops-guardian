@@ -151,10 +151,16 @@ async function main(): Promise<void> {
     .filter((l) => l.trim().length > 0);
 
   // Timestamp-shift rule (DP-CORPUS §6 FM-01): keep generation literals on disk;
-  // shift in memory only when the window is older than retention.
+  // shift in memory only. The 30-day rule covers retention; SEED_SHIFT_TO_NOW=1
+  // additionally handles Grafana Cloud's short out-of-order window, which
+  // rejects days-old samples on first push (err-mimir-sample-timestamp-too-old)
+  // even when retention would allow them. Shifting moves the whole incident
+  // (metrics + logs share tsOf) so the printed effective window below is what
+  // the Diagnose form's Window start/end must be set to for that seed.
   const maxTs = Math.max(...metrics.map((m) => Date.parse(m["ts"] as string)));
+  const shiftToNow = ["1", "true", "yes"].includes((process.env["SEED_SHIFT_TO_NOW"] ?? "").toLowerCase());
   let shiftMs = 0;
-  if (Date.now() - maxTs > 30 * 24 * 3600 * 1000) {
+  if (Date.now() - maxTs > 30 * 24 * 3600 * 1000 || shiftToNow) {
     shiftMs = Date.now() - 2 * 3600 * 1000 - maxTs;
     console.log(`seed:grafana: shifted timestamps by ${Math.round(shiftMs / 1000)}s to fit retention`);
   }
@@ -267,7 +273,11 @@ async function main(): Promise<void> {
   );
 
   console.log("seed:grafana: dashboard_uid=cineops-render-queue panel_id=1 provisioned");
+  const eff = (iso: string): string => new Date(Date.parse(iso) + shiftMs).toISOString().replace(/\.\d{3}Z$/, "Z");
   console.log(`seed:grafana: incident window ${manifest.incident_window.from} → ${manifest.incident_window.to}`);
+  if (shiftMs !== 0) {
+    console.log(`seed:grafana: EFFECTIVE window after shift (use in Diagnose form): ${eff(manifest.incident_window.from)} → ${eff(manifest.incident_window.to)}`);
+  }
 }
 
 await main();
