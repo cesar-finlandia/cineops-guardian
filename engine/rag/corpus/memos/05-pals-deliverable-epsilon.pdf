@@ -12,7 +12,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 5 0 obj
-<< /Length 656 >>
+<< /Length 687 >>
 stream
 BT
 /F1 12 Tf
@@ -22,19 +22,19 @@ BT
 T*
 () Tj
 T*
-(NEON HOLLOW — VFX Delivery Memo 2/6) Tj
+(PALS — VFX Delivery Memo 5/6) Tj
 T*
-(Deliverable: Beta) Tj
+(Deliverable: Epsilon) Tj
 T*
-(Due: 2026-09-07T17:00:00Z) Tj
+(Due: 2026-09-10T17:00:00Z) Tj
 T*
-(Owner: J. Reyes) Tj
+(Owner: S. Chen) Tj
 T*
-(Shots: NH-041, NH-042, NH-043, NH-044, NH-045, NH-046, NH-047, NH-048, NH-049, NH-050, NH-051, NH-052, NH-053, NH-054, NH-055, NH-056, NH-057, NH-058, NH-059, NH-060, NH-061, NH-062, NH-063, NH-064, NH-065, NH-066, NH-067, NH-068, NH-069, NH-070, NH-071, NH-072, NH-073, NH-074, NH-075, NH-076, NH-077, NH-078, NH-079, NH-080) Tj
+(Shots: PAL-161, PAL-162, PAL-163, PAL-164, PAL-165, PAL-166, PAL-167, PAL-168, PAL-169, PAL-170, PAL-171, PAL-172, PAL-173, PAL-174, PAL-175, PAL-176, PAL-177, PAL-178, PAL-179, PAL-180, PAL-181, PAL-182, PAL-183, PAL-184, PAL-185, PAL-186, PAL-187, PAL-188, PAL-189, PAL-190, PAL-191, PAL-192, PAL-193, PAL-194, PAL-195, PAL-196, PAL-197, PAL-198, PAL-199, PAL-200) Tj
 T*
 () Tj
 T*
-(Creature cleanup and wire removal across the canyon chase; roto locked per supervisor review.) Tj
+(Crowd tiling and digi-double integration for the plaza evacuation; matchmove re-exported.) Tj
 T*
 ET
 endstream
@@ -50,5 +50,5 @@ xref
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-1018
+1049
 %%EOF

@@ -1,0 +1,3 @@
+{"ts": "2026-09-04T14:00:00Z", "job_id": "rq-pal-001", "shot_id": "PAL-001", "level": "ERROR", "msg": "render failed: rq-pal-001 PAL-001 queue timeout after 302.2s (SYNTHETIC DEMO DATA — NOT REAL)", "trace_id": "tr-9f2c41ab77d0"}
+{"ts": "2026-09-04T14:05:00Z", "job_id": "rq-pal-005", "shot_id": "PAL-005", "level": "ERROR", "msg": "render failed: rq-pal-005 PAL-005 queue timeout after 287.9s (SYNTHETIC DEMO DATA — NOT REAL)", "trace_id": "tr-3b7e90cd12aa"}
+{"ts": "2026-09-04T14:20:00Z", "job_id": "rq-pal-013", "shot_id": "PAL-013", "level": "ERROR", "msg": "render failed: rq-pal-013 PAL-013 queue timeout after 265.4s (SYNTHETIC DEMO DATA — NOT REAL)", "trace_id": "tr-71af05e6c294"}

@@ -44,7 +44,7 @@ test.describe("UC-01..UC-08 Maya happy path (live Vertex + local Grafana + live 
     await page.getByTestId("seed-btn").click();
     await expect(page.getByTestId("seed-btn")).toBeEnabled({ timeout: 180_000 });
     await expect(page.locator('[role="alert"]')).toHaveCount(0);
-    const seed = await page.request.post("/api/seed", { data: { production: "NEON HOLLOW" } });
+    const seed = await page.request.post("/api/seed", { data: { production: "PALS" } });
     if (!seed.ok()) throw new Error(`seed ensure failed: HTTP ${seed.status()} ${await seed.text()}`);
     const seedBody = await seed.json();
     expect(seedBody.shots).toBe(240);

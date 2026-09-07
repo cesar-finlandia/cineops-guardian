@@ -163,6 +163,25 @@ def _adapt_args(tool: str, kind: str, args: dict, session: Any) -> dict:
                 args["datasourceUid"] = uid
         if "logql" in args and "startRfc3339" not in args and "endRfc3339" not in args and start and end:
             args["startRfc3339"], args["endRfc3339"] = start, end
+    elif kind == "dashboards":
+        # search_dashboards accepts ONLY query/limit/page
+        # (additionalProperties:false): the planner echoes uid/production
+        # from the inventory block into step args, and the server answers
+        # those with isError (Bug 1: every run degraded on this one call).
+        # Strip to the accepted keys; default the query to the corpus
+        # dashboard uid so the call stays meaningful.
+        clean: dict = {}
+        query = args.get("query")
+        if isinstance(query, str) and query.strip():
+            clean["query"] = query
+        else:
+            uid, _panel = _dashboard_target()
+            clean["query"] = uid
+        if "limit" in args:
+            clean["limit"] = args["limit"]
+        if "page" in args:
+            clean["page"] = args["page"]
+        return clean
     return args
 
 

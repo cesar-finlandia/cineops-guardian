@@ -45,7 +45,7 @@ test.describe("approval-reject + upload + edge contract (T1)", () => {
     const run = await page.request.post("/api/run", {
       data: {
         question: "Which shots are blocked for tomorrow's dailies and why?",
-        production: "NEON HOLLOW",
+        production: "PALS",
         window_from: "2026-09-04T14:00:00Z",
         window_to: "2026-09-04T15:30:00Z",
         severity_floor: "medium",

@@ -16,7 +16,7 @@ replay, then demodrive screenshots — never a silent mock.
 
 ## Q3 — Is the data real?
 
-NEON HOLLOW telemetry is seeded into the Grafana stack and the incident window
+PALS telemetry is seeded into the Grafana stack and the incident window
 is fixed in CORPUS.json; pre-flight re-seeds via npm run seed:grafana.
 
 ## Q4 — What does the model decide versus the rules?

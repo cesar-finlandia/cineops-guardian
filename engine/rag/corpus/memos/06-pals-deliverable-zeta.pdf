@@ -12,7 +12,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 5 0 obj
-<< /Length 662 >>
+<< /Length 684 >>
 stream
 BT
 /F1 12 Tf
@@ -22,19 +22,19 @@ BT
 T*
 () Tj
 T*
-(NEON HOLLOW — VFX Delivery Memo 3/6) Tj
+(PALS — VFX Delivery Memo 6/6) Tj
 T*
-(Deliverable: Gamma) Tj
+(Deliverable: Zeta) Tj
 T*
-(Due: 2026-09-08T17:00:00Z) Tj
+(Due: 2026-09-11T17:00:00Z) Tj
 T*
-(Owner: A. Lindqvist) Tj
+(Owner: D. Marsh) Tj
 T*
-(Shots: NH-081, NH-082, NH-083, NH-084, NH-085, NH-086, NH-087, NH-088, NH-089, NH-090, NH-091, NH-092, NH-093, NH-094, NH-095, NH-096, NH-097, NH-098, NH-099, NH-100, NH-101, NH-102, NH-103, NH-104, NH-105, NH-106, NH-107, NH-108, NH-109, NH-110, NH-111, NH-112, NH-113, NH-114, NH-115, NH-116, NH-117, NH-118, NH-119, NH-120) Tj
+(Shots: PAL-201, PAL-202, PAL-203, PAL-204, PAL-205, PAL-206, PAL-207, PAL-208, PAL-209, PAL-210, PAL-211, PAL-212, PAL-213, PAL-214, PAL-215, PAL-216, PAL-217, PAL-218, PAL-219, PAL-220, PAL-221, PAL-222, PAL-223, PAL-224, PAL-225, PAL-226, PAL-227, PAL-228, PAL-229, PAL-230, PAL-231, PAL-232, PAL-233, PAL-234, PAL-235, PAL-236, PAL-237, PAL-238, PAL-239, PAL-240) Tj
 T*
 () Tj
 T*
-(Neon signage replacements and hologram inserts for the market sequence; font pack v3 approved.) Tj
+(Title-sequence particle pass and end-card compositing; color pipeline ACEScg throughout.) Tj
 T*
 ET
 endstream
@@ -50,5 +50,5 @@ xref
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-1024
+1046
 %%EOF

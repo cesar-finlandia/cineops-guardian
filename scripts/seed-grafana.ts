@@ -202,7 +202,7 @@ async function main(): Promise<void> {
       byVendor.set(vendor, arr);
     }
     const streams = [...byVendor.entries()].map(([vendor, vals]) => ({
-      stream: { production: "NEON HOLLOW", job: "render", vendor },
+      stream: { production: "PALS", job: "render", vendor },
       values: vals.map((v) => [String(tsOf(v.ts) * 1e6), v.line]),
     }));
     await req(

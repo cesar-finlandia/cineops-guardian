@@ -6,7 +6,7 @@ groups:
     interval: 1m
     rules:
       - uid: cineops-p95-latency-high
-        title: CineOps render queue p95 latency high — NEON HOLLOW
+        title: CineOps render queue p95 latency high — PALS
         condition: C
         data:
           - refId: A
@@ -14,7 +14,7 @@ groups:
             relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="NEON HOLLOW"}[5m])))
+              expr: histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="PALS"}[5m])))
           - refId: C
             datasourceUid: __expr__
             model:
@@ -25,6 +25,6 @@ groups:
         annotations:
           summary: "SYNTHETIC DEMO DATA — NOT REAL: p95 render-queue latency above 300s"
         labels:
-          production: NEON HOLLOW
+          production: PALS
           synthetic: "true"
           severity: critical

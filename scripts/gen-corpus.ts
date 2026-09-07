@@ -20,7 +20,7 @@ void generateDocuments;
 void hashString;
 
 const SEED = 20260904;
-const PRODUCTION = "NEON HOLLOW";
+const PRODUCTION = "PALS";
 const INCIDENT_FROM = "2026-09-04T14:00:00Z";
 const INCIDENT_TO = "2026-09-04T15:30:00Z";
 const INCIDENT_VENDOR = "HELIOSFORGE";
@@ -57,12 +57,12 @@ const DUES = [
 ];
 const OWNERS = ["M. Okafor", "J. Reyes", "A. Lindqvist", "R. Patel", "S. Chen", "D. Marsh"];
 const PDF_NAMES = [
-  "01-neon-hollow-deliverable-alpha.pdf",
-  "02-neon-hollow-deliverable-beta.pdf",
-  "03-neon-hollow-deliverable-gamma.pdf",
-  "04-neon-hollow-deliverable-delta.pdf",
-  "05-neon-hollow-deliverable-epsilon.pdf",
-  "06-neon-hollow-deliverable-zeta.pdf",
+  "01-pals-deliverable-alpha.pdf",
+  "02-pals-deliverable-beta.pdf",
+  "03-pals-deliverable-gamma.pdf",
+  "04-pals-deliverable-delta.pdf",
+  "05-pals-deliverable-epsilon.pdf",
+  "06-pals-deliverable-zeta.pdf",
 ];
 const NOTES = [
   "Final VFX turnover for the opening city flyover; night plates graded and grain-matched.",
@@ -105,7 +105,7 @@ function buildShots(rand: () => number): ShotRow[] {
   const incidentToMs = Date.parse(INCIDENT_TO);
   let restIdx = 0;
   for (let i = 0; i < 240; i++) {
-    const shotId = `NH-${pad3(i + 1)}`;
+    const shotId = `PAL-${pad3(i + 1)}`;
     const vendor = VENDORS[i % 4] as string;
     const failed = failedSet.has(i);
     const status = failed ? "failed" : (restStatuses[restIdx++] as string);
@@ -115,8 +115,8 @@ function buildShots(rand: () => number): ShotRow[] {
       priority = Math.max(priority, 4);
     }
     const deps: string[] = [];
-    if (i > 0 && rand() < 0.35) deps.push(`NH-${pad3(i)}`);
-    if (i > 1 && rand() < 0.2) deps.push(`NH-${pad3(1 + Math.floor(rand() * i))}`);
+    if (i > 0 && rand() < 0.35) deps.push(`PAL-${pad3(i)}`);
+    if (i > 1 && rand() < 0.2) deps.push(`PAL-${pad3(1 + Math.floor(rand() * i))}`);
     rows.push({
       shot_id: shotId,
       production: PRODUCTION,
@@ -126,7 +126,7 @@ function buildShots(rand: () => number): ShotRow[] {
       status,
       priority,
       due_at: toDueAt(dueMs),
-      render_job_id: `rq-nh-${pad3(i + 1)}`.toLowerCase(),
+      render_job_id: `rq-pal-${pad3(i + 1)}`.toLowerCase(),
       dependency_shot_ids: deps.join(";"),
     });
   }
@@ -165,7 +165,7 @@ function buildMetrics(rand: () => number): { metrics: MetricRow[]; logs: Record<
   const pools: Record<string, string[]> = { HELIOSFORGE: [], PRISMWORKS: [], VANTASTUDIO: [], LUMENFRAME: [] };
   for (let i = 0; i < 240; i++) {
     const v = VENDORS[i % 4] as string;
-    (pools[v] as string[]).push(`NH-${pad3(i + 1)}`);
+    (pools[v] as string[]).push(`PAL-${pad3(i + 1)}`);
   }
   const metrics: MetricRow[] = [];
   const logs: Record<string, unknown>[] = [];
@@ -230,9 +230,9 @@ function buildCommitments(): Commitment[] {
   const out: Commitment[] = [];
   for (let k = 0; k < 6; k++) {
     const ids: string[] = [];
-    for (let n = k * 40 + 1; n <= k * 40 + 40; n++) ids.push(`NH-${pad3(n)}`);
+    for (let n = k * 40 + 1; n <= k * 40 + 40; n++) ids.push(`PAL-${pad3(n)}`);
     out.push({
-      commitment_id: `C-NH-0${k + 1}`,
+      commitment_id: `C-PAL-0${k + 1}`,
       source_file: PDF_NAMES[k] as string,
       production: PRODUCTION,
       deliverable: DELIVERABLES[k] as string,
@@ -261,7 +261,7 @@ function memoLines(k: number, c: Commitment): string[] {
   return [
     WATERMARK_HEADER_TEXT,
     "",
-    `NEON HOLLOW — VFX Delivery Memo ${k + 1}/6`,
+    `PALS — VFX Delivery Memo ${k + 1}/6`,
     `Deliverable: ${c.deliverable}`,
     `Due: ${c.due_at}`,
     `Owner: ${c.owner}`,
@@ -276,7 +276,7 @@ function dashboardJson(): string {
     JSON.stringify(
       {
         uid: DASHBOARD_UID,
-        title: "CineOps — NEON HOLLOW render queue",
+        title: "CineOps — PALS render queue",
         tags: ["cineops", "synthetic"],
         timezone: "utc",
         schemaVersion: 39,
@@ -284,22 +284,22 @@ function dashboardJson(): string {
         panels: [
           {
             id: 1,
-            title: "Render queue latency (p95, sec) — NEON HOLLOW",
+            title: "Render queue latency (p95, sec) — PALS",
             type: "timeseries",
             datasource: { type: "prometheus", uid: "prometheus" },
             targets: [
               {
                 refId: "A",
-                expr: 'histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="NEON HOLLOW"}[$__rate_interval])))',
+                expr: 'histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="PALS"}[$__rate_interval])))',
               },
             ],
           },
           {
             id: 2,
-            title: "Failed jobs — NEON HOLLOW",
+            title: "Failed jobs — PALS",
             type: "table",
             datasource: { type: "loki", uid: "loki" },
-            targets: [{ refId: "A", expr: '{production="NEON HOLLOW"} |= "failed"' }],
+            targets: [{ refId: "A", expr: '{production="PALS"} |= "failed"' }],
           },
         ],
       },
@@ -318,7 +318,7 @@ groups:
     interval: 1m
     rules:
       - uid: cineops-p95-latency-high
-        title: CineOps render queue p95 latency high — NEON HOLLOW
+        title: CineOps render queue p95 latency high — PALS
         condition: C
         data:
           - refId: A
@@ -326,7 +326,7 @@ groups:
             relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="NEON HOLLOW"}[5m])))
+              expr: histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="PALS"}[5m])))
           - refId: C
             datasourceUid: __expr__
             model:
@@ -337,7 +337,7 @@ groups:
         annotations:
           summary: "SYNTHETIC DEMO DATA — NOT REAL: p95 render-queue latency above 300s"
         labels:
-          production: NEON HOLLOW
+          production: PALS
           synthetic: "true"
           severity: critical
 `;

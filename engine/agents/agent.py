@@ -51,7 +51,7 @@ _FALLBACK_STEPS = [
     # the dashboard histogram panel is aspirational). LogQL valid on both
     # stacks (production label exists in Cloud and local Loki).
     {"step_no": 2, "kind": "metrics", "tool_hint": "query_prometheus", "args": {"query": "cineops_render_queue_latency_seconds"}, "why": "render latency in window"},
-    {"step_no": 3, "kind": "logs", "tool_hint": "query_loki_logs", "args": {"query": "{production=\"NEON HOLLOW\"} |= \"failed\""}, "why": "failed jobs in window"},
+    {"step_no": 3, "kind": "logs", "tool_hint": "query_loki_logs", "args": {"query": "{production=\"PALS\"} |= \"failed\""}, "why": "failed jobs in window"},
 ]
 _VALID_KINDS = ("metrics", "logs", "traces", "dashboards", "alerts", "incidents")
 
@@ -114,13 +114,13 @@ def _inventory_block() -> str:
     """
     lines = [
         '- metric: cineops_render_queue_latency_seconds (labels: production, shot_id, vendor, status)',
-        '- logs selector: {production="NEON HOLLOW"} with filter |= "failed"',
+        '- logs selector: {production="PALS"} with filter |= "failed"',
     ]
     try:
         data = json.loads(Path("engine/rag/corpus/CORPUS.json").read_text(encoding="utf-8"))
-        lines.append(f"- dashboard: uid={data.get('dashboard_uid', 'cineops-render-queue')} production={data.get('production', 'NEON HOLLOW')}")
+        lines.append(f"- dashboard: uid={data.get('dashboard_uid', 'cineops-render-queue')} production={data.get('production', 'PALS')}")
     except Exception:
-        lines.append("- dashboard: uid=cineops-render-queue production=NEON HOLLOW")
+        lines.append("- dashboard: uid=cineops-render-queue production=PALS")
     try:
         dash = json.loads(Path("grafana/dashboard.json").read_text(encoding="utf-8"))
         for p in dash.get("panels", []) or []:
@@ -213,7 +213,7 @@ def tool_correlate(evidence: list[dict]) -> dict:
             ev_objs.append(GrafanaEvidence(**e))
         except Exception:
             continue
-    ctx = tool_load_context("", "NEON HOLLOW")
+    ctx = tool_load_context("", "PALS")
     from engine.schema.domain import ProductionShot, DeliveryCommitment
 
     shots = [ProductionShot(**s) for s in ctx["shots"]]
@@ -221,7 +221,7 @@ def tool_correlate(evidence: list[dict]) -> dict:
     try:
         from engine.bq.loader import query_trend
 
-        trend = query_trend("NEON HOLLOW")
+        trend = query_trend("PALS")
     except Exception:
         trend = []
     findings = correlate(shots, commitments, ev_objs, trend)
@@ -320,11 +320,11 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
         mcp_calls = len(evidence)
         for ev in evidence:
             await _pub("query-grafana", "streaming", {"mcp_tool": ev.mcp_tool, "kind": ev.kind, "rows": ev.row_count, "took_ms": ev.took_ms})
-        await _pub("query-grafana", "done", {"evidence": [e.model_dump() for e in evidence], "evidence_ids": [e.evidence_id for e in evidence], "mcp_calls": mcp_calls}, degraded=bool(q.get("_degraded")))
+        await _pub("query-grafana", "done", {"evidence": [e.model_dump() for e in evidence], "evidence_ids": [e.evidence_id for e in evidence], "mcp_calls": mcp_calls, "reasons": [str(r) for r in q.get("_degraded", []) or []]}, degraded=bool(q.get("_degraded")))
     except Exception as exc:
         evidence, mcp_calls = [], 0
         degraded_reasons.append(f"query-grafana: {exc}")
-        await _pub("query-grafana", "done", {"evidence_ids": [], "mcp_calls": 0}, degraded=True)
+        await _pub("query-grafana", "done", {"evidence_ids": [], "mcp_calls": 0, "reasons": [f"query-grafana: {exc}"]}, degraded=True)
 
     # A4 persist-snapshot.
     try:

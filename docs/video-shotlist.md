@@ -2,7 +2,7 @@
 
 | # | t_start | t_end | on-screen action | narration line | proof established |
 |---|---|---|---|---|---|
-| 1 | 0:00 | 0:15 | Maya named on the Ingest screen; the NEON HOLLOW Grafana dashboard failing render queue (incident window from CORPUS.json); dailies deadline chyron. | Meet Maya, post-production coordinator on NEON HOLLOW. Tomorrow's dailies are blocked — the render queue is failing. | pain + incident_window reproducibility |
+| 1 | 0:00 | 0:15 | Maya named on the Ingest screen; the PALS Grafana dashboard failing render queue (incident window from CORPUS.json); dailies deadline chyron. | Meet Maya, post-production coordinator on PALS. Tomorrow's dailies are blocked — the render queue is failing. | pain + incident_window reproducibility |
 | 2 | 0:15 | 0:30 | Browser address bar: PUBLIC_URL from docs/DEPLOY.md typed in, live Cloud Run app loading (no mock). | This is CineOps Guardian, live on Cloud Run — not slides, the real product. | CMP-05 live deploy |
 | 3 | 0:30 | 0:50 | Ingest screen: plain-English question typed — "Which shots are blocked for tomorrow's dailies and why?"; Diagnose clicked. | Maya asks in plain English which shots are blocked for dailies, and hits Diagnose. | ask |
 | 4 | 0:50 | 1:40 | Run screen: the 8 agent steps streaming; evidence cards legible showing live Grafana MCP tool names and row counts; logs/mcp-grafana.jsonl tail inset. | The agent queries the Grafana Cloud MCP server live — every evidence card names the MCP tool and row count. | track gate CMP-03; NEVER CUT |

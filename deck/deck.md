@@ -6,7 +6,7 @@
 
 ## 1. The problem
 
-Meet Maya, post-production coordinator on NEON HOLLOW. Tomorrow's dailies are
+Meet Maya, post-production coordinator on PALS. Tomorrow's dailies are
 blocked — the render queue is failing (incident window
 2026-09-04T14:00:00Z → 2026-09-04T15:30:00Z, vendor HELIOSFORGE, from
 `engine/rag/corpus/CORPUS.json`).

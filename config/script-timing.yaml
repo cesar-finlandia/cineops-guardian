@@ -1,7 +1,7 @@
 sections:
   - name: pain
     seconds: 15
-    narration: "Meet Maya, post-production coordinator on NEON HOLLOW. Tomorrow's dailies are blocked — the render queue is failing."
+    narration: "Meet Maya, post-production coordinator on PALS. Tomorrow's dailies are blocked — the render queue is failing."
   - name: live
     seconds: 15
     narration: "This is CineOps Guardian, live on Cloud Run — not slides, the real product."

@@ -22,6 +22,7 @@ import { ResultScreen } from "./ResultScreen.js";
 import { HealthPill } from "./components/HealthPill.js";
 import { ThemeToggle } from "./ThemeToggle.js";
 import { BrandMark } from "./BrandMark.js";
+import { IndustryGuide } from "./components/IndustryGuide.js";
 import type { DegradedStep } from "./components/DegradedBanner.js";
 
 void STEP_IDS;
@@ -190,11 +191,13 @@ export function reduceEnvelope(state: RunState, env: EventEnvelope): RunState {
     next = { ...next, status: "error", error: str(p["error"] ?? p["message"] ?? "run failed") };
   }
   if (isDegradedEnvelope(env)) {
-    // Explicit WHAT-degraded: backend degraded payloads carry `error`, not
-    // `reason`, so the old single-string fallback always printed the generic
-    // "degraded fallback". Record one row per affected step instead.
+    // Explicit WHAT-degraded: backend degraded payloads carry `error` (and
+    // query-grafana carries a `reasons` array); surface them per step instead
+    // of the old generic single string.
     const p = payload as Record<string, unknown>;
-    const cause = str(p["reason"] ?? p["error"] ?? "fallback evidence used");
+    const rawReasons = p["reasons"];
+    const reasonList = Array.isArray(rawReasons) ? rawReasons.map((r) => String(r)).filter((s) => s.length > 0) : [];
+    const cause = (reasonList.slice(0, 3).join("; ") || str(p["reason"] ?? p["error"] ?? "fallback evidence used")).slice(0, 220);
     const seen = new Set(next.degradedSteps.map((d) => d.step));
     const steps = seen.has(env.step_id)
       ? next.degradedSteps
@@ -310,7 +313,7 @@ export function App(): JSX.Element {
     setSeedResult(null);
     try {
       // The Seed button promises a (re)load: force the refresh path.
-      const res = await postSeed({ production: "NEON HOLLOW", refresh: true });
+      const res = await postSeed({ production: "PALS", refresh: true });
       setSeedResult({ shots: res.shots, metrics: res.metrics });
     } catch (e) {
       // Seeding provisions BigQuery — meaningless offline. Report it, never
@@ -361,6 +364,16 @@ export function App(): JSX.Element {
     setScreen("ingest");
   };
 
+  // Bug 2: pill must stay truthful when a green probe still failed mid-run.
+  // Map degraded steps to the service the pill reports on.
+  const STEP_SERVICE: Record<string, string> = {
+    "plan-queries": "gemini",
+    "summarize-run": "gemini",
+    "query-grafana": "grafana-mcp",
+    "persist-snapshot": "bigquery",
+  };
+  const runIssues = [...new Set(run.degradedSteps.map((d) => STEP_SERVICE[d.step]).filter((s): s is string => typeof s === "string"))];
+
   return (
     <div className="cineops-app" data-screen={screen}>
       <a className="cg-skip-link" href="#cg-main">
@@ -379,7 +392,8 @@ export function App(): JSX.Element {
           </div>
         </div>
         <div className="cg-header-right">
-          <HealthPill ok={null} label="backend" />
+          <IndustryGuide />
+          <HealthPill ok={null} label="backend" runIssues={runIssues} />
           <ThemeToggle />
         </div>
       </header>

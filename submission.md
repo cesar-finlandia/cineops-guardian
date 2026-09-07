@@ -32,7 +32,7 @@ imported or called anywhere (gate: `scripts/hygiene.sh`).
 
 ## Other data sources
 
-Call sheets and VFX delivery memos for the demo production NEON HOLLOW
+Call sheets and VFX delivery memos for the demo production PALS
 (synthetic corpus under `engine/rag/corpus/`, every record watermarked
 `synthetic:true` with first line `SYNTHETIC DEMO DATA — NOT REAL`), plus live
 Grafana telemetry seeded by `npm run seed:grafana` (7 days of render-queue

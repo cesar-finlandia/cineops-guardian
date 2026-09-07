@@ -1,7 +1,7 @@
 # CineOps Guardian — full walkthrough
 
 **What you are about to do:** play Maya, a post-production coordinator on the
-show *NEON HOLLOW*. It is the evening before dailies. Somewhere in the render
+show *PALS*. It is the evening before dailies. Somewhere in the render
 farm, shots are stuck — and Maya has to walk into the 8am dailies meeting able
 to say *which* shots are blocked, *why*, and *what she has already done about
 it*.
@@ -196,7 +196,7 @@ PY
 ```
 
 You should see a JSON response containing `"uid":"cineops-render-queue"`.
-Reload the Grafana tab: a dashboard **"CineOps — NEON HOLLOW render queue"**
+Reload the Grafana tab: a dashboard **"CineOps — PALS render queue"**
 now exists.
 
 > `npm run seed:grafana` does this same job **against a hosted Grafana Cloud
@@ -307,7 +307,7 @@ Below it, the ingest form, pre-filled with Maya's actual situation.
 
 | Field | Pre-filled with | What it means |
 |---|---|---|
-| **Production** | `NEON HOLLOW` | which show to triage |
+| **Production** | `PALS` | which show to triage |
 | **Question** | *Which shots are blocked for tomorrow's dailies and why?* | the plain-English question; the agent plans its Grafana queries from this |
 | **Window start** | `2026-09-04T14:00:00Z` | start of the incident window to look at |
 | **Window end** | `2026-09-04T15:30:00Z` | end of it |
@@ -318,6 +318,30 @@ Below it, the ingest form, pre-filled with Maya's actual situation.
 the 90-minute window in which the render farm actually went wrong, and they
 match the seeded telemetry. Change the window and you will (correctly) get a
 quiet, boring answer.
+
+### What each field REALLY does (nothing here is hardcoded)
+
+Fair suspicion — prefilled forms smell like a stage play. Here is exactly where
+each value flows in code (`engine/agents/agent.py`, `engine/diagnose/*`), and
+what happens when you change it. Try any of these on your *second* run.
+
+| Field | Where the value goes | What happens if you change it |
+|---|---|---|
+| **Production** (free text) | Labels all 240 corpus shots; seeds the planner's inventory examples; filters the BigQuery trend and the `production="…"` label in every MCP query | The *data* only exists for PALS, so another name still loads 240 shots (nothing blanks!) but telemetry evidence thins out: BQ trend comes back empty, MCP label filters match nothing, findings shrink to commitment-based mediums. Relabel, not breakage. |
+| **Question** (free textarea) | Sent verbatim to Gemini `plan-queries`, which returns a validated `QueryPlan` (≤8 steps, only kinds metrics/logs/traces/dashboards/alerts/incidents); falls back to a deterministic 3-step plan if the model path degrades | Genuinely different questions → genuinely different plans. Try "are there any firing alerts for HELIOSFORGE?" and watch the plan favor alerts over metrics. Nonsense questions get a valid-but-boring plan, not an error. |
+| **Window start/end** (free text, ISO-8601) | Bounds the plan and becomes the `startTime/endTime` (Prometheus) and `startRfc3339/endRfc3339` (Loki) args of every MCP call | Telemetry spans 2026-08-29 → 09-04 with the incident 09-04 14:00–15:30. A window outside the data (e.g. last week) returns empty evidence and an honest "no findings" run. Malformed dates fall back safely, never crash. |
+| **Severity floor** (`low`/`medium`/`high`) | Passed to `propose_remediation`, which drops every finding ranked below it (`engine/diagnose/remediate.py:67-69`) | Fully functional switch. `low` = everything incl. noise (big CSV); `high` = only fires (quiet 9 AM standup view). Findings are always *computed*; the floor only filters what becomes actions. |
+| **Call sheets / memos** (file input, `.pdf`/`.csv`, ≤10 MB each) | ⚠️ Honest status: the upload **endpoint works** (validated, stored under `/tmp/cineops/uploads/<trace>/`, `POST /api/upload` returns paths) but the agent **does not read uploaded files yet** — every run parses the corpus CSV + corpus memos dir. Your files land on disk and are ignored. This is known plumbing-without-consumer, not a look-and-feel stub: the fix is one consumer in `tool_load_context`, and it is the top open item, not a demo blocker since the corpus covers the story. |
+| **Load demo production** | `POST /api/seed` → loads corpus CSVs into BigQuery (`240 shots / 8064 metrics`, idempotent ensure on later runs) | Safe to click any time; the green widget confirms counts. |
+| **Diagnose** | `POST /api/run` → mints a `trace_id`, starts the 8-step agent as a background task, subscribes the UI to its SSE stream | The only button that spends model/token budget. Every click = one full run. |
+
+Want proof the fields are live, not theatre? Change severity to `low`, rerun, and compare the CSV row count. Then change the question (above) and watch different MCP tools appear in the evidence rail. Two runs, same data, different behavior — that is the opposite of hardcoded.
+
+Uploadable today: `design_documents/tutorial/examples/PALS-shot-list-sample.csv`
+has the exact required header, so it passes validation — it just won't alter the
+run until the consumer lands. The realistic human-authored versions of every
+corpus file live beside it in `design_documents/tutorial/examples/` (see
+`examples/README.md`).
 
 ### Step 1 — Load the demo production
 
@@ -392,9 +416,9 @@ is also appended to `logs/mcp-grafana.jsonl` on disk if you want the receipts.
 At step 7 the run **stops** and a panel appears:
 
 ```
-☑ a-f-NH-118-reprioritize — reprioritize
-☑ a-f-NH-118-annotate — annotate
-☑ a-f-NH-122-reprioritize — reprioritize
+☑ a-f-PAL-118-reprioritize — reprioritize
+☑ a-f-PAL-118-annotate — annotate
+☑ a-f-PAL-122-reprioritize — reprioritize
    …
 [ Approve selected (19) ]   [ Reject all ]
 ```
@@ -451,7 +475,7 @@ already live on the dashboard.
 Below, one card per finding:
 
 ```
-f-NH-118   shot: NH-118   level: blocked   rules: R-QUEUE
+f-PAL-118   shot: PAL-118   level: blocked   rules: R-QUEUE
   • sustained queue-latency breach for HELIOSFORGE in the incident window
   • delivery commitment due before dailies, shot still unapproved
   [citations]
@@ -471,7 +495,7 @@ distinction is why Maya can defend this in a meeting.
 Each write shows a receipt:
 
 ```
-a-f-NH-118-annotate: written via create_annotation (path: mcp)   Open in Grafana
+a-f-PAL-118-annotate: written via create_annotation (path: mcp)   Open in Grafana
 ```
 
 `create_annotation` is the Grafana MCP tool that did it, and `path: mcp` says
@@ -480,7 +504,7 @@ it went through the MCP server rather than the REST fallback.
 **Click "Open in Grafana".** It opens the dashboard at the annotated panel.
 
 Now switch to your Grafana tab (<http://127.0.0.1:3000>) and open
-**CineOps — NEON HOLLOW render queue**. On the latency panel you will see the
+**CineOps — PALS render queue**. On the latency panel you will see the
 annotation marker the agent just created. Hover it: the incident note is there,
 in Maya's dashboard, where her team looks — not buried in a chat log.
 
@@ -507,7 +531,7 @@ Click **Download revised schedule CSV**. Your browser saves
 
 ```
 shot_id,production,status,priority,due_at,action,recommended_note
-NH-118,NEON HOLLOW,failed,1,2026-09-05T08:00:00Z,reprioritize,Sustained queue ...
+PAL-118,PALS,failed,1,2026-09-05T08:00:00Z,reprioritize,Sustained queue ...
 ```
 
 That file is what Maya sends the render wrangler. The walkthrough's real-world

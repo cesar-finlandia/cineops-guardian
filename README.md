@@ -77,7 +77,7 @@ called anywhere (gate: `bash scripts/hygiene.sh`).
 
 ## Synthetic data
 
-Call sheets + VFX delivery memos for NEON HOLLOW are synthetic fixtures (no
+Call sheets + VFX delivery memos for PALS are synthetic fixtures (no
 real studio data; every record watermarked `synthetic:true`, every memo first
 line `SYNTHETIC DEMO DATA — NOT REAL`). Grafana telemetry is seeded by
 `npm run seed:grafana`.

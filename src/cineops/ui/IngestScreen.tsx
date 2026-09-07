@@ -15,7 +15,7 @@ export interface IngestScreenProps {
 
 export function IngestScreen(props: IngestScreenProps): JSX.Element {
   const { onStart, seeding, onSeed, seedResult = null, seedError = null } = props;
-  const [production, setProduction] = useState("NEON HOLLOW");
+  const [production, setProduction] = useState("PALS");
   const [question, setQuestion] = useState("Which shots are blocked for tomorrow's dailies and why?");
   const [windowFrom, setWindowFrom] = useState("2026-09-04T14:00:00Z");
   const [windowTo, setWindowTo] = useState("2026-09-04T15:30:00Z");
@@ -25,7 +25,7 @@ export function IngestScreen(props: IngestScreenProps): JSX.Element {
   return (
     <section className="cineops-ingest" data-screen="ingest">
       <div className="cg-hero">
-        <p className="cg-eyebrow">Neon Hollow · Dailies triage</p>
+        <p className="cg-eyebrow">Pals · Dailies triage</p>
         <h2>Which shots are blocked for tomorrow&apos;s dailies — and why?</h2>
         <p className="cg-lede">
           Ask in plain English. The agent queries live Grafana telemetry, joins it with your call sheets

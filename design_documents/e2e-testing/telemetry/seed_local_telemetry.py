@@ -150,7 +150,7 @@ def push_logs() -> None:
         if ts_ms > now_ms:
             dropped += 1  # Loki rejects future timestamps; demo window is all past anyway
             continue
-        key = json.dumps({"production": "NEON HOLLOW", "shot_id": row.get("shot_id", "?"),
+        key = json.dumps({"production": "PALS", "shot_id": row.get("shot_id", "?"),
                           "level": row.get("level", "?")}, sort_keys=True)
         ts_ns = str(ts_ms * 1_000_000)
         streams.setdefault(key, []).append([ts_ns, line])
