@@ -145,10 +145,39 @@ async function main(): Promise<void> {
   const manifest = JSON.parse(readFileSync(join(CORPUS, "CORPUS.json"), "utf8")) as {
     incident_window: { from: string; to: string; vendor: string };
   };
-  const metrics = parseCsv(readFileSync(join(CORPUS, "telemetry", "render_queue_metrics.csv"), "utf8"));
-  const logs = readFileSync(join(CORPUS, "telemetry", "failed_jobs.jsonl"), "utf8")
+  const metricsAll = parseCsv(readFileSync(join(CORPUS, "telemetry", "render_queue_metrics.csv"), "utf8"));
+  const logsAll = readFileSync(join(CORPUS, "telemetry", "failed_jobs.jsonl"), "utf8")
     .split("\n")
     .filter((l) => l.trim().length > 0);
+  // Cloud push window: Grafana Cloud's out-of-order gate rejects anything more
+  // than ~hours old, so the full 7-day grid can never land there regardless of
+  // shifting (shifting preserves the grid's width). The demo only ever queries
+  // the 90-minute incident window (+ margin for range queries); long-range
+  // trend context lives in BigQuery, not Grafana. So for a Cloud-targeted
+  // push (SEED_SHIFT_TO_NOW=1) keep [from-3h, to+1h] and anchor the shift on
+  // the incident end. Local/docker pushes keep the full grid (long retention).
+  const winFrom = Date.parse(manifest.incident_window.from);
+  const winTo = Date.parse(manifest.incident_window.to);
+  const shiftToNow = ["1", "true", "yes"].includes((process.env["SEED_SHIFT_TO_NOW"] ?? "").toLowerCase());
+  let metrics = metricsAll;
+  let logs = logsAll;
+  if (shiftToNow) {
+    const keepFrom = winFrom - 3 * 3600 * 1000;
+    const keepTo = winTo + 1 * 3600 * 1000;
+    metrics = metricsAll.filter((m) => {
+      const t = Date.parse(m["ts"] as string);
+      return t >= keepFrom && t <= keepTo;
+    });
+    logs = logsAll.filter((l) => {
+      try {
+        const t = Date.parse((JSON.parse(l) as { ts: string }).ts);
+        return t >= keepFrom && t <= keepTo;
+      } catch {
+        return false;
+      }
+    });
+    console.log(`seed:grafana: Cloud window filter kept ${metrics.length}/${metricsAll.length} metric rows, ${logs.length}/${logsAll.length} log lines`);
+  }
 
   // Timestamp-shift rule (DP-CORPUS §6 FM-01): keep generation literals on disk;
   // shift in memory only. The 30-day rule covers retention; SEED_SHIFT_TO_NOW=1
@@ -158,9 +187,11 @@ async function main(): Promise<void> {
   // (metrics + logs share tsOf) so the printed effective window below is what
   // the Diagnose form's Window start/end must be set to for that seed.
   const maxTs = Math.max(...metrics.map((m) => Date.parse(m["ts"] as string)));
-  const shiftToNow = ["1", "true", "yes"].includes((process.env["SEED_SHIFT_TO_NOW"] ?? "").toLowerCase());
   let shiftMs = 0;
-  if (Date.now() - maxTs > 30 * 24 * 3600 * 1000 || shiftToNow) {
+  if (shiftToNow) {
+    shiftMs = Date.now() - 30 * 60 * 1000 - winTo;
+    console.log(`seed:grafana: shifted timestamps by ${Math.round(shiftMs / 1000)}s (incident end → 30 min ago)`);
+  } else if (Date.now() - maxTs > 30 * 24 * 3600 * 1000) {
     shiftMs = Date.now() - 2 * 3600 * 1000 - maxTs;
     console.log(`seed:grafana: shifted timestamps by ${Math.round(shiftMs / 1000)}s to fit retention`);
   }
