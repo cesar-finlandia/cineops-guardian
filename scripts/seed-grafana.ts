@@ -104,12 +104,12 @@ function parseCsv(text: string): Record<string, string>[] {
   });
 }
 
-async function req(url: string, init: RequestInit, token: string, label_: string): Promise<Response> {
+async function req(url: string, init: RequestInit, auth: string, label_: string): Promise<Response> {
   let attempt = 0;
   for (;;) {
     const res = await fetch(url, {
       ...init,
-      headers: { ...(init.headers as Record<string, string>), Authorization: `Bearer ${token}` },
+      headers: { ...(init.headers as Record<string, string>), Authorization: auth },
     });
     if ((res.status === 429 || res.status >= 500) && attempt < 3) {
       attempt++;
@@ -132,6 +132,28 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const base = stack.replace(/\/$/, "");
+  const bearer = `Bearer ${token}`;
+  // Grafana Cloud does NOT serve Prometheus/Loki ingestion at the stack root
+  // (${base}/api/prom/... and ${base}/loki/... 404 there). Push goes to the
+  // per-instance hosts from the Cloud portal (Connections → Details):
+  //   GRAFANA_PROM_PUSH_URL=https://prometheus-prod-XX.grafana.net/api/prom/push
+  //   GRAFANA_LOKI_PUSH_URL=https://logs-prod-XX.grafana.net/loki/api/v1/push
+  // with Basic auth (username = instance ID on the same details page,
+  // password = a token with metrics:write / logs:write scope). When unset,
+  // the legacy stack-root paths are used (self-hosted layouts).
+  function pushTarget(prefix: string, legacyPath: string): { url: string; auth: string } {
+    const override = env(`GRAFANA_${prefix}_PUSH_URL`);
+    if (!override) return { url: `${base}${legacyPath}`, auth: bearer };
+    const user = env(`GRAFANA_${prefix}_USER`);
+    const pass = env(`GRAFANA_${prefix}_PASS`);
+    if (!user || !pass) {
+      console.log(`seed:grafana: ${prefix} push URL set but GRAFANA_${prefix}_USER/PASS missing`);
+      process.exit(1);
+    }
+    return { url: override, auth: "Basic " + Buffer.from(`${user}:${pass}`, "utf8").toString("base64") };
+  }
+  const prom = pushTarget("PROM", "/api/prom/api/v1/write");
+  const loki = pushTarget("LOKI", "/loki/api/v1/push");
   const manifest = JSON.parse(readFileSync(join(CORPUS, "CORPUS.json"), "utf8")) as {
     incident_window: { from: string; to: string; vendor: string };
   };
@@ -173,7 +195,7 @@ async function main(): Promise<void> {
     const fp = createHash("sha1").update(`${first["ts"]}${last["ts"]}${batch.length}`).digest("hex").slice(0, 12);
     void fp;
     await req(
-      `${base}/api/prom/api/v1/write`,
+      prom.url,
       {
         method: "POST",
         headers: {
@@ -183,7 +205,7 @@ async function main(): Promise<void> {
         },
         body: body as unknown as BodyInit,
       },
-      token,
+      prom.auth,
       `metrics batch ${i / BATCH}`,
     );
     await new Promise((r) => setTimeout(r, 250));
@@ -206,9 +228,9 @@ async function main(): Promise<void> {
       values: vals.map((v) => [String(tsOf(v.ts) * 1e6), v.line]),
     }));
     await req(
-      `${base}/loki/api/v1/push`,
+      loki.url,
       { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ streams }) },
-      token,
+      loki.auth,
       `logs batch ${i / LOG_BATCH}`,
     );
   }
@@ -216,7 +238,7 @@ async function main(): Promise<void> {
   // 3) Dashboard provision: GET-then-POST, overwrite in place.
   const dashboard = JSON.parse(readFileSync(join(ROOT, "grafana", "dashboard.json"), "utf8"));
   const existing = await fetch(`${base}/api/dashboards/uid/cineops-render-queue`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: bearer },
   });
   if (existing.status === 200) {
     const body = (await existing.json()) as { dashboard: { version: number } };
@@ -224,7 +246,7 @@ async function main(): Promise<void> {
     await req(
       `${base}/api/dashboards/db`,
       { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dashboard, overwrite: true }) },
-      token,
+      bearer,
       "dashboard overwrite",
     );
     console.log("seed:grafana: already provisioned / updated in place: cineops-render-queue");
@@ -232,7 +254,7 @@ async function main(): Promise<void> {
     await req(
       `${base}/api/dashboards/db`,
       { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dashboard, overwrite: false }) },
-      token,
+      bearer,
       "dashboard create",
     );
   } else {
@@ -244,7 +266,7 @@ async function main(): Promise<void> {
   await req(
     `${base}/api/ruler/grafana/api/v1/rules/CineOps`,
     { method: "POST", headers: { "Content-Type": "application/yaml" }, body: rulesYaml },
-    token,
+    bearer,
     "alert rules",
   );
 
