@@ -1,14 +1,11 @@
 // DP-CORPUS — Grafana seeder (WU-CORPUS-06, live, cross-service).
 // Pushes render_queue_metrics.csv via Prometheus remote-write (hand-encoded
-// WriteRequest + vendored literal-only snappy framing), failed_jobs.jsonl via
-// Loki push, then provisions dashboard.json + alert-rules.yaml. Idempotent:
+// WriteRequest + raw snappy block compression, literals only), failed_jobs.jsonl
+// via Loki push, then provisions dashboard.json + alert-rules.yaml. Idempotent:
 // re-runs overwrite the same dashboard uid / ruler group in place.
-// NOTE: metrics use a minimal valid snappy stream (literals only); the stack
-// decodes it as standard snappy/xerial framing.
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CORPUS = join(ROOT, "engine", "rag", "corpus");
@@ -57,65 +54,30 @@ function writeRequest(series: number[][]): Buffer {
   return Buffer.from(out);
 }
 
-// --- CRC32C (Castagnoli) + masked checksum for snappy framing ---
-// Table-driven, reflected polynomial 0x82F63B78. Pure TS: no runtime dep.
-const CRC32C_TABLE: number[] = (() => {
-  const t: number[] = [];
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0x82f63b78 ^ (c >>> 1) : c >>> 1;
-    t.push(c >>> 0);
-  }
-  return t;
-})();
-
-function crc32c(buf: Buffer): number {
-  let crc = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) crc = CRC32C_TABLE[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-// Snappy framing masks the checksum of each UNCOMPRESSED chunk:
-// masked = ((crc >> 15) | (crc << 17)) + 0xa282ead8 (mod 2^32), little-endian.
-function maskedCrc(chunk: Buffer): number[] {
-  const c = crc32c(chunk);
-  const m = (((c >>> 15) | (c << 17)) + 0xa282ead8) >>> 0;
-  return [m & 0xff, (m >>> 8) & 0xff, (m >>> 16) & 0xff, (m >>> 24) & 0xff];
-}
-
-// --- minimal snappy framing (stream identifier + literal-only chunks) ---
-function snappyCompress(raw: Buffer): Buffer {
-  const parts: Buffer[] = [Buffer.from([0x82, 0x53, 0x4e, 0x41, 0x50, 0x50, 0x59, 0x00, 0x00, 0x00])];
-  let offset = 0;
-  while (offset < raw.length) {
-    const chunk = raw.subarray(offset, Math.min(offset + 32768, raw.length));
-    offset += chunk.length;
-    // Chunk payload = 4-byte masked checksum, then the literal run (tag + bytes).
-    const body: number[] = [...maskedCrc(chunk)];
-    // single literal element header: (len-1)<<2 | 00, 60+ encoding for len>60
-    const n = chunk.length;
-    if (n <= 60) {
-      body.push(((n - 1) << 2) | 0);
-    } else {
-      const lenBytes: number[] = [];
-      let tmp = n - 1;
-      while (tmp > 0) {
-        lenBytes.push(tmp & 0xff);
-        tmp >>= 8;
-      }
-      body.push((59 + lenBytes.length) << 2);
-      body.push(...lenBytes);
+// --- raw snappy block encoder (literals only, no runtime dep) ---
+// CRITICAL: Prometheus remote-write bodies are RAW snappy blocks, NOT framed
+// streams. A previous version emitted xerial-style framing (stream identifier
+// + checksummed chunks) and Cloud answered "decompress snappy: corrupt input"
+// for every batch. Raw block layout: varint(uncompressed length) followed by
+// literal elements (tag + bytes). No identifier, no chunks, no checksums.
+function snappyBlock(raw: Buffer): Buffer {
+  const out: number[] = [...varint(raw.length)];
+  // Single literal run; tag encodes len-1 (60..63 => 1..4 extra length bytes).
+  const n = raw.length;
+  if (n <= 60) {
+    out.push(((n - 1) << 2) | 0);
+  } else {
+    const lenBytes: number[] = [];
+    let tmp = n - 1;
+    while (tmp > 0) {
+      lenBytes.push(tmp & 0xff);
+      tmp >>= 8;
     }
-    body.push(...Array.from(chunk));
-    const header = Buffer.alloc(4);
-    header[0] = 0x00;
-    const size = body.length;
-    header[1] = size & 0xff;
-    header[2] = (size >> 8) & 0xff;
-    header[3] = (size >> 16) & 0xff;
-    parts.push(header, Buffer.from(body));
+    out.push((59 + lenBytes.length) << 2);
+    out.push(...lenBytes);
   }
-  return Buffer.concat(parts);
+  out.push(...Array.from(raw));
+  return Buffer.from(out);
 }
 
 function parseCsv(text: string): Record<string, string>[] {
@@ -199,7 +161,34 @@ async function main(): Promise<void> {
   }
   const tsOf = (iso: string): number => Date.parse(iso) + shiftMs;
 
-  // 1) Metrics push: 500 samples per request.
+  // 1) Metrics push: 500 samples per request, split further when one raw
+  // block would exceed 60_000 uncompressed bytes (keeps every POST a
+  // single small raw snappy block, valid for any receiver block limit).
+  async function pushSeries(series: number[][], label_: string): Promise<void> {
+    const raw = writeRequest(series);
+    if (raw.length > 60000 && series.length > 1) {
+      const half = Math.ceil(series.length / 2);
+      await pushSeries(series.slice(0, half), label_);
+      await pushSeries(series.slice(half), label_);
+      return;
+    }
+    const body = snappyBlock(raw);
+    await req(
+      prom.url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-protobuf",
+          "Content-Encoding": "snappy",
+          "X-Prometheus-Remote-Write-Version": "0.1.0",
+        },
+        body: body as unknown as BodyInit,
+      },
+      prom.auth,
+      label_,
+    );
+    await new Promise((r) => setTimeout(r, 250));
+  }
   const BATCH = 500;
   for (let i = 0; i < metrics.length; i += BATCH) {
     const batch = metrics.slice(i, i + BATCH);
@@ -216,26 +205,7 @@ async function main(): Promise<void> {
         [sample(Number(m["queue_latency_sec"]), tsOf(m["ts"] as string))],
       ),
     );
-    const body = snappyCompress(writeRequest(series));
-    const first = batch[0] as Record<string, string>;
-    const last = batch[batch.length - 1] as Record<string, string>;
-    const fp = createHash("sha1").update(`${first["ts"]}${last["ts"]}${batch.length}`).digest("hex").slice(0, 12);
-    void fp;
-    await req(
-      prom.url,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-protobuf",
-          "Content-Encoding": "snappy",
-          "X-Prometheus-Remote-Write-Version": "0.1.0",
-        },
-        body: body as unknown as BodyInit,
-      },
-      prom.auth,
-      `metrics batch ${i / BATCH}`,
-    );
-    await new Promise((r) => setTimeout(r, 250));
+    await pushSeries(series, `metrics batch ${i / BATCH}`);
   }
 
   // 2) Logs push: 200 lines per request, grouped by vendor stream labels.
