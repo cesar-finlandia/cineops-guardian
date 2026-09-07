@@ -186,6 +186,8 @@ async function main(): Promise<void> {
     });
     tsOf = (iso: string): number => mapTs(iso);
     console.log(`seed:grafana: Cloud re-map kept ${metrics.length}/${metricsAll.length} metric rows, ${logs.length}/${logsAll.length} log lines`);
+    const fmtEarly = (ms: number): string => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
+    console.log(`seed:grafana: EFFECTIVE window (use in Diagnose form): ${fmtEarly(EFF_START)} → ${fmtEarly(EFF_END)}`);
   }
 
   // Timestamp rule (DP-CORPUS §6 FM-01): generation literals stay frozen on
@@ -309,14 +311,25 @@ async function main(): Promise<void> {
     throw new Error(`seed:grafana: dashboard lookup failed with ${existing.status}`);
   }
 
-  // 4) Alert rule provision: overwrite the same ruler group.
+  // 4) Alert rule provision: overwrite the same ruler group. A 403 here means
+  // the token lacks alert.rules:write — warn and continue, since the demo
+  // runs fully without the provisioned rule (R-QUEUE/R-FAILRUN carry it);
+  // every other failure still throws.
   const rulesYaml = readFileSync(join(ROOT, "grafana", "alert-rules.yaml"), "utf8");
-  await req(
-    `${base}/api/ruler/grafana/api/v1/rules/CineOps`,
-    { method: "POST", headers: { "Content-Type": "application/yaml" }, body: rulesYaml },
-    bearer,
-    "alert rules",
-  );
+  try {
+    await req(
+      `${base}/api/ruler/grafana/api/v1/rules/CineOps`,
+      { method: "POST", headers: { "Content-Type": "application/yaml" }, body: rulesYaml },
+      bearer,
+      "alert rules",
+    );
+  } catch (e) {
+    if (String(e).includes("failed with 403")) {
+      console.log("seed:grafana: WARNING: alert rules skipped (token needs alert.rules:write; grant it in the Cloud portal if you want R-ALERT evidence — demo works without it)");
+    } else {
+      throw e;
+    }
+  }
 
   console.log("seed:grafana: dashboard_uid=cineops-render-queue panel_id=1 provisioned");
   console.log(`seed:grafana: incident window ${manifest.incident_window.from} → ${manifest.incident_window.to}`);
