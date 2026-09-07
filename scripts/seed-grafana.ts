@@ -61,11 +61,12 @@ function writeRequest(series: number[][]): Buffer {
 // for every batch. Raw block layout: varint(uncompressed length) followed by
 // literal elements (tag + bytes). No identifier, no chunks, no checksums.
 function snappyBlock(raw: Buffer): Buffer {
-  const out: number[] = [...varint(raw.length)];
-  // Single literal run; tag encodes len-1 (60..63 => 1..4 extra length bytes).
+  // Buffer.concat throughout: argument spreading 10k+ bytes overflows the
+  // call stack (found by the self-test at 200 kB).
   const n = raw.length;
+  let tag: Buffer;
   if (n <= 60) {
-    out.push(((n - 1) << 2) | 0);
+    tag = Buffer.from([((n - 1) << 2) | 0]);
   } else {
     const lenBytes: number[] = [];
     let tmp = n - 1;
@@ -73,11 +74,9 @@ function snappyBlock(raw: Buffer): Buffer {
       lenBytes.push(tmp & 0xff);
       tmp >>= 8;
     }
-    out.push((59 + lenBytes.length) << 2);
-    out.push(...lenBytes);
+    tag = Buffer.from([(59 + lenBytes.length) << 2, ...lenBytes]);
   }
-  out.push(...Array.from(raw));
-  return Buffer.from(out);
+  return Buffer.concat([Buffer.from(varint(n)), tag, raw]);
 }
 
 function parseCsv(text: string): Record<string, string>[] {
