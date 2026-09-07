@@ -377,28 +377,43 @@ async def run_diagnosis(request: RunRequest, publish: Any = None, approval: Any 
                 )
             await _pub("write-back", "done", {"receipts": [r.model_dump() for r in receipts], "approved": []})
         else:
-            await _pub("write-back", "started", {"awaiting_approval": True, "actions": [a.model_dump() for a in actions]})
-            approved_ids = await gate.wait(trace_id, actions)
-            if not approved_ids:
-                degraded_reasons.append("approval-timeout")
-            by_id = {a.action_id: a for a in actions}
-            for aid in approved_ids:
-                a = by_id.get(aid)
-                if a is None:
-                    continue
-                if a.kind == "annotate":
-                    receipts.append(mcp_write_annotation(a))
-                elif a.kind == "incident_note":
-                    receipts.append(mcp_write_incident_note(a))
-                else:
-                    continue
-            try:
-                from engine.bq.loader import persist_remediation
+            needs_approval = [a for a in actions if getattr(a, "requires_approval", False)]
+            if not needs_approval:
+                # Nothing to write: skip the gate entirely so the UI never
+                # flashes an empty approval control that then vanishes. The
+                # run continues straight to the summary with receipts == [].
+                await _pub("write-back", "started", {"awaiting_approval": False, "actions": []})
+                receipts = []
+                try:
+                    from engine.bq.loader import persist_remediation
 
-                persist_remediation(trace_id, receipts)
-            except Exception as exc:
-                degraded_reasons.append(f"persist-remediation: {exc}")
-            await _pub("write-back", "done", {"receipts": [r.model_dump() for r in receipts], "approved": list(approved_ids)})
+                    persist_remediation(trace_id, receipts)
+                except Exception as exc:
+                    degraded_reasons.append(f"persist-remediation: {exc}")
+                await _pub("write-back", "done", {"receipts": [], "approved": []})
+            else:
+                await _pub("write-back", "started", {"awaiting_approval": True, "actions": [a.model_dump() for a in needs_approval]})
+                approved_ids = await gate.wait(trace_id, actions)
+                if not approved_ids:
+                    degraded_reasons.append("approval-timeout")
+                by_id = {a.action_id: a for a in actions}
+                for aid in approved_ids:
+                    a = by_id.get(aid)
+                    if a is None:
+                        continue
+                    if a.kind == "annotate":
+                        receipts.append(mcp_write_annotation(a))
+                    elif a.kind == "incident_note":
+                        receipts.append(mcp_write_incident_note(a))
+                    else:
+                        continue
+                try:
+                    from engine.bq.loader import persist_remediation
+
+                    persist_remediation(trace_id, receipts)
+                except Exception as exc:
+                    degraded_reasons.append(f"persist-remediation: {exc}")
+                await _pub("write-back", "done", {"receipts": [r.model_dump() for r in receipts], "approved": list(approved_ids)})
     except Exception as exc:
         degraded_reasons.append(f"write-back: {exc}")
         await _pub("write-back", "done", {"receipts": [], "error": str(exc)}, degraded=True)

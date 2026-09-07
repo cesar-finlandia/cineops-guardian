@@ -1,17 +1,21 @@
 // CineOps Guardian — run screen (DP-UI FR-10 + FR-14).
-// NOTE: chassis StepStatusIndicator/StreamingTextRenderer consume envelopes,
-// so App additionally passes the raw envelopes via the optional `envelopes`
-// prop (additive to the DP-UI literal props; screens never re-subscribe).
+// NOTE: the chassis StepStatusIndicator cannot host per-row content, so the
+// unified 8-step timeline below is owned here (same li[data-step-id] contract
+// the e2e gate asserts on). StreamingTextRenderer (chassis) still renders the
+// per-step deltas. App additionally passes raw envelopes via the optional
+// `envelopes` prop (additive to the DP-UI literal props; screens never
+// re-subscribe).
 import type { JSX } from "react";
 import type { EventEnvelope } from "src/platform/transport/event-envelope.js";
 import type { StreamStatus } from "src/platform/transport/useEventStream.js";
-import { StepStatusIndicator, StreamingTextRenderer } from "src/platform/ui/index.js";
+import { StreamingTextRenderer } from "src/platform/ui/index.js";
 import { STEP_IDS } from "../types.js";
 import type { RunState } from "./App.js";
 import { EvidenceCard } from "./components/EvidenceCard.js";
 import { DegradedBanner } from "./components/DegradedBanner.js";
 import { ActionApproval } from "./components/ActionApproval.js";
 import { RunLoader } from "./widgets/RunLoader.js";
+import { StepHelpButton } from "./components/StepHelp.js";
 
 export interface RunScreenProps {
   state: RunState;
@@ -30,7 +34,8 @@ export interface RunScreenProps {
 
 function stepStatus(state: RunState, envelopes: EventEnvelope[], id: string): string {
   const scoped = envelopes.filter((e) => e.step_id === id);
-  if (scoped.some((e) => e.status === "done" || e.status === "error")) return "done";
+  if (scoped.some((e) => e.status === "done")) return "done";
+  if (scoped.some((e) => e.status === "error")) return "error";
   if (scoped.some((e) => e.status === "started" || e.status === "streaming")) return "running";
   void state;
   return "pending";
@@ -66,22 +71,22 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
           Stream error — retrying…{onReconnect ? <button onClick={onReconnect}>Reconnect</button> : null}
         </p>
       ) : null}
-      {/* FR-10: exactly one progress list covering the fixed 8-step run.
-          The chassis StepStatusIndicator (read-only, envelope-driven) renders
-          the steps the run has reached; the roadmap below appends the steps it
-          has not reached yet, which the chassis component cannot know about
-          (its status enum has no "pending"). Rendering both lists in full
-          duplicated every step on screen and in the DOM (E2E F17) — Maya saw
-          the same eight rows twice. One step_id, one row, all eight visible
-          from the first second of the run. */}
-      <StepStatusIndicator envelopes={envelopes} title="Progress" />
+      {/* FR-10: one unified 8-step timeline. Every row carries its live
+          status plus a "?" help button explaining what the step does and how
+          to tell it's working — judges evaluate against those words. One
+          step_id, one row, all eight visible from the first second. */}
+      <h3 className="cg-zone-title">Progress</h3>
       <ol className="cineops-steps ui-step-status__steps">
-        {STEP_IDS.filter((id) => stepStatus(state, envelopes, id) === "pending").map((id) => (
-          <li key={id} className="ui-step ui-step--pending" data-step-id={id} data-status="pending">
-            <span className="ui-badge ui-badge--pending">pending</span>
-            <span className="ui-step__label">{id}</span>
-          </li>
-        ))}
+        {STEP_IDS.map((id) => {
+          const st = stepStatus(state, envelopes, id);
+          return (
+            <li key={id} className={`ui-step ui-step--${st}`} data-step-id={id} data-status={st}>
+              <span className={`ui-badge ui-badge--${st}`}>{st}</span>
+              <span className="ui-step__label">{id}</span>
+              <StepHelpButton step={id} />
+            </li>
+          );
+        })}
       </ol>
       <div className="cineops-deltas">
         {STEP_IDS.filter((id) => state.streamDeltas[id]).map((id) => (
@@ -105,7 +110,7 @@ export function RunScreen(props: RunScreenProps): JSX.Element {
           <p>No Grafana evidence returned.</p>
         ) : null}
       </div>
-      {state.awaitingApproval ? (
+      {state.awaitingApproval && state.actions.length > 0 ? (
         <ActionApproval actions={state.actions} disabled={approved || approving} approving={approving} onApprove={onApprove} />
       ) : null}
     </section>

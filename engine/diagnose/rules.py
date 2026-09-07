@@ -17,8 +17,13 @@ from src.resilience.degraded import is_degraded_result
 from engine.runtime.guard import unwrap
 
 LATENCY_BREACH_SECONDS: float = 120.0
-LATENCY_MIN_CONSECUTIVE: int = 5
-FAILED_RUN_THRESHOLD: int = 3
+# Single breach in the window is enough to block dailies triage: the demo
+# corpus (and live Prometheus range queries) carry ~1 sample per shot in the
+# 90-minute incident window, so requiring 5 consecutive samples made R-QUEUE
+# structurally unreachable. Same for logs: max 2 failed lines per shot in the
+# window, so a threshold of 3 made R-FAILRUN unreachable.
+LATENCY_MIN_CONSECUTIVE: int = 1
+FAILED_RUN_THRESHOLD: int = 1
 AT_RISK_PER_SHOT_HOURS: float = 4.0
 AT_RISK_PER_DEPENDANT_HOURS: float = 1.5
 AT_RISK_CAP_HOURS: float = 48.0
@@ -302,16 +307,37 @@ def _pred_incident(ctx: RuleContext) -> tuple[bool, dict]:
 
 
 def _pred_commit(ctx: RuleContext) -> tuple[bool, dict]:
-    window_from = ctx.incident_window.get("from")
     window_to = ctx.incident_window.get("to")
-    if not isinstance(window_from, str) or not isinstance(window_to, str):
+    if not isinstance(window_to, str) or not window_to:
         return (False, {})
     if ctx.shot.status in ("approved", "delivered"):
         return (False, {})
     for c in ctx.commitments_for_shot:
         due = getattr(c, "due_at", None)
-        if isinstance(due, str) and window_from <= due <= window_to:
+        # Anything due by dailies (overdue OR due in window) blocks when the
+        # shot is not yet approved/delivered. The old
+        # window_from <= due <= window_to check missed every overdue shot
+        # (e.g. failed Sep-02 shots vs a Sep-04 dailies window).
+        if isinstance(due, str) and due and due <= window_to:
             return (True, {"commitment_id": c.commitment_id, "due_at": due})
+    return (False, {})
+
+
+def _pred_status_failed(ctx: RuleContext) -> tuple[bool, dict]:
+    # Shot-list ground truth: a failed shot blocks dailies even when the
+    # telemetry window is empty or sparse. Without this, failed shots with no
+    # matching metrics/logs produced NO finding at all and silently vanished
+    # from the result (the "all healthy, nothing to do" degenerate run).
+    if ctx.shot.status == "failed":
+        return (True, {})
+    return (False, {})
+
+
+def _pred_pending(ctx: RuleContext) -> tuple[bool, dict]:
+    # Catch-all so queued/rendering/review shots never vanish silently: they
+    # are work still in flight for dailies.
+    if ctx.shot.status in ("queued", "rendering", "review"):
+        return (True, {})
     return (False, {})
 
 
@@ -343,7 +369,9 @@ DIAGNOSTIC_RULES: list = [
     ("R-FANOUT", _pred_fanout, "blocked", "Shot {shot_id} failed and blocks {n_dep} downstream shot(s): {dep_list}"),
     ("R-ALERT", _pred_alert, "high", "Alert {alert_name} is {alert_state} for vendor {vendor} (shot {shot_id})"),
     ("R-INCIDENT", _pred_incident, "blocked", "Open incident {incident_title} ({incident_state}) touches production {production}"),
+    ("R-STATUS", _pred_status_failed, "blocked", "Shot {shot_id} is failed in the shot list (job {render_job_id}, vendor {vendor}) — needs triage for dailies"),
     ("R-COMMIT", _pred_commit, "medium", "Commitment {commitment_id} due {due_at} covers unapproved shot {shot_id} (status {status})"),
+    ("R-PENDING", _pred_pending, "low", "Shot {shot_id} still in flight (status {status}, vendor {vendor}) — verify it clears before dailies"),
     ("R-TREND", _pred_trend, "medium", "Worsening 7d trend: failed_jobs {first_f}→{last_f}, p95 {first_p:.1f}s→{last_p:.1f}s"),
     ("R-OK", _pred_ok, "ok", "Shot {shot_id} healthy (status {status}, vendor {vendor})"),
 ]

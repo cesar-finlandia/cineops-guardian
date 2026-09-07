@@ -1018,7 +1018,8 @@ body {
   background: transparent;
 }
 .ui-step[data-status="started"]::before,
-.ui-step[data-status="streaming"]::before {
+.ui-step[data-status="streaming"]::before,
+.ui-step[data-status="running"]::before {
   border-color: var(--cg-line);
   border-top-color: var(--cg-accent);
   animation: cg-spin 0.9s linear infinite;
@@ -1037,7 +1038,8 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .ui-step[data-status="started"]::before,
-  .ui-step[data-status="streaming"]::before {
+  .ui-step[data-status="streaming"]::before,
+  .ui-step[data-status="running"]::before {
     animation: none !important;
     border-top-color: var(--cg-line);
     border-color: var(--cg-accent);
@@ -1161,4 +1163,75 @@ body {
   .cg-guide-btn {
     padding: 6px 10px;
   }
+}
+
+/* ============ 11. PER-STEP HELP POPOVERS ============ */
+.cg-zone-title {
+  font-family: var(--cg-font-display);
+  font-size: 16px;
+  margin: 16px 0 4px;
+}
+.cg-step-help {
+  margin-left: auto;
+  position: relative;
+  flex: none;
+}
+.cg-step-help-btn {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid var(--cg-line);
+  background: var(--cg-bg-sunken);
+  color: var(--cg-fg-muted);
+  cursor: pointer;
+}
+.cg-step-help-btn:hover {
+  border-color: var(--cg-accent);
+  color: var(--cg-accent);
+}
+.cg-step-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(340px, 80vw);
+  z-index: 40;
+  background: var(--cg-bg-overlay);
+  border: 1px solid var(--cg-accent);
+  border-radius: var(--cg-radius-md);
+  box-shadow: var(--cg-shadow);
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+}
+.cg-step-pop-title {
+  font-family: var(--cg-font-display);
+  font-size: 14px;
+}
+.cg-step-pop-does {
+  color: var(--cg-fg);
+}
+.cg-step-pop-work {
+  border-left: 3px solid var(--cg-teal);
+  padding-left: 8px;
+  color: var(--cg-fg-muted);
+  font-size: 12.5px;
+}
+.cg-step-pop-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  font-size: 12px;
 }

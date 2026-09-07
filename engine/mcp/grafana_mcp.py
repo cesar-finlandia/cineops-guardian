@@ -125,7 +125,18 @@ def _datasource_uid(session: Any, ds_type: str) -> str | None:
                     cands.append(d)
         if not cands:
             return None
-        cands.sort(key=lambda d: (not bool(d.get("isDefault")), str(d.get("name", ""))))
+        # Prefer the real production store: Grafana Cloud ships auxiliary
+        # stores of the same type (e.g. a loki-type
+        # "grafanacloud-alert-state-history" datasource). Querying production
+        # logs against the alert-history store returns rows without shot_id,
+        # so R-FAILRUN silently never fires. Deprioritize alert/history/state
+        # stores; prefer the default, then alphabetical.
+        def _rank(d: dict) -> tuple:
+            name = str(d.get("name", "")).lower()
+            is_aux = any(k in name for k in ("alert", "history", "state"))
+            return (is_aux, not bool(d.get("isDefault")), name)
+
+        cands.sort(key=_rank)
         uid = str(cands[0]["uid"])
         _DS_UID_CACHE[ds_type] = uid
         return uid
