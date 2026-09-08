@@ -311,10 +311,10 @@ async function main(): Promise<void> {
       }
       console.log(`seed:grafana: rebound datasources to prometheus=${promUid} loki=${lokiUid}`);
     } else {
-      console.log(`seed:grafana: WARNING: datasource lookup ${dsRes.status}, pushing dashboard with placeholder uids`);
+      console.log(`seed:grafana: WARNING: datasource lookup ${dsRes.status} — dashboard pushes with placeholder uids (panels will show "datasource was not found"). Grant datasources:read to the service account in the Cloud portal, then re-run seed.`);
     }
   } catch (e) {
-    console.log(`seed:grafana: WARNING: datasource rebind skipped (${String(e).slice(0, 120)})`);
+    console.log(`seed:grafana: WARNING: datasource rebind skipped (${String(e).slice(0, 120)}). Grant datasources:read to the service account, then re-run seed.`);
   }
   const existing = await fetch(`${base}/api/dashboards/uid/cineops-render-queue`, {
     headers: { Authorization: bearer },
