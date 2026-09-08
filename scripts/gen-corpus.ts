@@ -284,13 +284,13 @@ function dashboardJson(): string {
         panels: [
           {
             id: 1,
-            title: "Render queue latency (p95, sec) — PALS",
+            title: "Render queue latency (max, sec) — PALS",
             type: "timeseries",
             datasource: { type: "prometheus", uid: "prometheus" },
             targets: [
               {
                 refId: "A",
-                expr: 'histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="PALS"}[$__rate_interval])))',
+                expr: 'max by (vendor) (cineops_render_queue_latency_seconds{production="PALS"})',
               },
             ],
           },
@@ -318,7 +318,7 @@ groups:
     interval: 1m
     rules:
       - uid: cineops-p95-latency-high
-        title: CineOps render queue p95 latency high — PALS
+        title: CineOps render queue max latency high — PALS
         condition: C
         data:
           - refId: A
@@ -326,7 +326,7 @@ groups:
             relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: histogram_quantile(0.95, sum by (le, vendor) (rate(cineops_render_queue_latency_seconds_bucket{production="PALS"}[5m])))
+              expr: max(cineops_render_queue_latency_seconds{production="PALS"})
           - refId: C
             datasourceUid: __expr__
             model:

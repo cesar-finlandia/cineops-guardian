@@ -285,8 +285,37 @@ async function main(): Promise<void> {
     );
   }
 
-  // 3) Dashboard provision: GET-then-POST, overwrite in place.
+  // 3) Dashboard provision: GET-then-POST, overwrite in place. The committed
+  // dashboard.json is stack-portable (placeholder uids "prometheus"/"loki");
+  // rebind them here to this stack's real datasource UIDs, or every panel
+  // renders "datasource was not found". Panel-1's expr is also validated to
+  // reference the pushed gauge metric (never histogram buckets we don't ship).
   const dashboard = JSON.parse(readFileSync(join(ROOT, "grafana", "dashboard.json"), "utf8"));
+  try {
+    const dsRes = await fetch(`${base}/api/datasources`, { headers: { Authorization: bearer } });
+    if (dsRes.ok) {
+      const dsList = (await dsRes.json()) as { type: string; uid: string; isDefault?: boolean; name?: string }[];
+      const pick = (t: string): string | null => {
+        const cands = dsList.filter((d) => (d.type || "").toLowerCase() === t);
+        if (cands.length === 0) return null;
+        return (cands.find((d) => d.isDefault) ?? cands[0] as { uid: string }).uid;
+      };
+      const promUid = pick("prometheus");
+      const lokiUid = pick("loki");
+      for (const p of dashboard.panels ?? []) {
+        const want = p?.datasource?.type === "loki" ? lokiUid : p?.datasource?.type === "prometheus" ? promUid : null;
+        if (want) {
+          p.datasource = { type: p.datasource.type, uid: want };
+          for (const t of p.targets ?? []) t.datasource = { type: p.datasource.type, uid: want };
+        }
+      }
+      console.log(`seed:grafana: rebound datasources to prometheus=${promUid} loki=${lokiUid}`);
+    } else {
+      console.log(`seed:grafana: WARNING: datasource lookup ${dsRes.status}, pushing dashboard with placeholder uids`);
+    }
+  } catch (e) {
+    console.log(`seed:grafana: WARNING: datasource rebind skipped (${String(e).slice(0, 120)})`);
+  }
   const existing = await fetch(`${base}/api/dashboards/uid/cineops-render-queue`, {
     headers: { Authorization: bearer },
   });
