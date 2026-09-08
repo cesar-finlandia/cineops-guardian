@@ -9,8 +9,6 @@ Powered by Gemini 2.5 Flash on Vertex AI (ADC — no API keys) + google-adk.
 - Spin-up: [docs/SPINUP.md](docs/SPINUP.md)
 - License: [LICENSE](LICENSE)
 
-> Modification rule: the only pre-existing files ANY plan may modify are: `package.json`, `pyproject.toml`, `config/model-profiles.json`, `config/env.example`, `config/transport.json`, `config/deploy/provider.json`, `index.html`, `vite.config.ts`, `README.md`, `.gitignore`, and the `engine/**` TODO(ENGINE) stubs. All chassis `src/*` and `contracts/*` are read-only. Enforcement: `git diff --name-only` must show no other pre-existing path touched.
-
 ## Track
 
 Partner track: Grafana Labs
@@ -84,20 +82,57 @@ line `SYNTHETIC DEMO DATA — NOT REAL`). Grafana telemetry is seeded by
 
 ## Run it
 
-See [docs/SPINUP.md](docs/SPINUP.md).
+Live demo (Cloud Run): **https://cineops-guardian-7h3vdn6jtq-uc.a.run.app**
+— open it, click **Load demo production**, then **Diagnose**.
 
-## Verified end to end
-
-Every use case is proven in a real Chromium browser against the real backend
-serving the real `dist/` build — the same artifact the container ships. The
-strategy, the use-case matrix (UC-01..UC-12) and the defect log are in
-[design_documents/e2e-testing/STRATEGY.md](design_documents/e2e-testing/STRATEGY.md);
-the runnable suite sits beside it:
+Local run (Windows, Git Bash or PowerShell — run from the repo root):
 
 ```bash
-npm run build:ui
-npx playwright test --config design_documents/e2e-testing/playwright.config.ts
+cp config/env.example .env   # fill GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION,
+                             # GRAFANA_STACK_URL, GRAFANA_SERVICE_ACCOUNT_TOKEN
+npm ci && pip install -e .   # use python3.14 -m pip if `pip` points elsewhere
+npm run build:ui             # backend serves dist/ at /
+uvicorn engine.api.app:app --host 127.0.0.1 --port 8080
+# open http://127.0.0.1:8080
 ```
+
+Needs: Node ≥ 20, Python ≥ 3.11, Google Cloud ADC (`gcloud auth
+application-default login` — Vertex AI, no API keys). Without credentials the
+app still runs end to end on the synthetic corpus with honest degraded flags.
+Full clean-clone procedure: [docs/SPINUP.md](docs/SPINUP.md). Longer
+click-by-click walkthrough (Maya's night-before-dailies run):
+[design_documents/tutorial/tutorial.md](design_documents/tutorial/tutorial.md).
+Human-readable samples of every corpus file:
+[design_documents/tutorial/examples/](design_documents/tutorial/examples/).
+
+### Testing the Grafana MCP connection
+
+Health probe (no browser needed):
+
+```bash
+curl -s http://127.0.0.1:8080/api/health | python3 -m json.tool
+# want: "ok": true, gemini.reachable true,
+# grafana_mcp: {"reachable": true, "transport": "stdio", "tool_count": 81, ...}
+```
+
+Direct probe of the MCP server (same calls the app makes, needs the `.env`
+Grafana values in your shell):
+
+```bash
+python3 -c "from engine.mcp.grafana_mcp import mcp_health, mcp_tool_names
+print(mcp_health())"                                   # connection + 81 tools
+python3 -c "from engine.mcp.grafana_mcp import mcp_call
+print(mcp_call('search_dashboards', {'query': 'cineops-render-queue'}, kind='dashboards'))"
+```
+
+What counts as proof (track gate): every MCP call is appended to
+`logs/mcp-grafana.jsonl` (`tool`, `kind`, `rows`, `ms`, `path`, `ok`); the
+discovered tool list is pinned in `engine/mcp/TOOLS.md`; in the UI each
+evidence card names its `MCP tool`, and each write receipt shows its tool plus
+`path: mcp` with an **Open in Grafana** deep link. Seeding Cloud telemetry:
+`npm run seed:grafana` (see script header for Cloud push-target env vars).
+
+## Verified end to end
 
 Three tiers: T0 proves the offline golden fallback boots and completes with no
 credentials and no network; T1 (the gate) drives the full Maya flow — seed,
